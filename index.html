@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Conecta Portas - Sistema de Desenho</title>
+  <!-- Favicon inline para evitar 404 -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚪</text></svg>">
+  <!-- Bootstrap 5 CSS (apenas para o sidebar) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Fontes e estilos da aplicação original -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/bootstrap-sidebar.css">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <!-- Fix para remover fundos cinza e molduras -->
+  <link rel="stylesheet" href="css/fix-background.css">
+  <!-- Estilos para o botão Novo Projeto -->
+  <link rel="stylesheet" href="css/novo-projeto.css">
+  <!-- Credenciais do Supabase -->
+  <script>
+    window.supabaseUrl = 'https://nzgifjdewdfibcopolof.supabase.co';
+    window.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56Z2lmamRld2RmaWJjb3BvbG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NjA4NDAsImV4cCI6MjA2MzAzNjg0MH0.O7MKZNx_Cd-Z12iq8h0pq6Sq0bmJazcxDHvlVb4VJQc';
+  </script>
+  <!-- Compatibilidade com navegadores mais antigos -->
+  <script>
+    // Verificar se o navegador suporta módulos ES
+    var suportaModulos = 'noModule' in HTMLScriptElement.prototype;
+  </script>
+  <!-- Estilos para modais personalizados -->
+  <style>
+    #usuarioFormModal .modal-dialog,
+    #confirmarExclusaoModal .modal-dialog {
+      width: 440px !important;
+      max-width: 90% !important;
+    }
+    
+    /* Ajustes do cabeçalho para evitar quebras */
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 100%;
+      padding: 0 15px;
+      position: relative;
+    }
+    
+    .logo-container {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+    
+    #parceiro-nome {
+      flex-grow: 1;
+      text-align: left;
+      margin-left: 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .user-info-container {
+      flex-shrink: 0;
+      margin-left: 20px;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      height: 100%;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      white-space: nowrap;
+      height: 100%;
+    }
+    
+    .user-info-text {
+      display: flex;
+      flex-direction: column;
+      max-width: 150px;
+      overflow: hidden;
+      text-align: right;
+      justify-content: center;
+      height: 100%;
+    }
+    
+    .user-name, .user-email {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 150px;
+      line-height: 1.2;
+    }
+    
+    .user-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
+    
+    /* Email foi removido da interface */
+    .user-email {
+      display: none;
+    }
+    
+    .btn-logout {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.85);
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      transition: all 0.2s ease;
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-right: -15px;
+    }
+    
+    .btn-logout:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+    
+    /* Estilo para o status de deslogado */
+    .user-status-deslogado {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      height: 100%;
+    }
+    
+    .user-status-deslogado:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .user-status-deslogado i {
+      font-size: 1rem;
+    }
+    
+    /* Ajuste geral do cabeçalho */
+    .header {
+      height: 60px;
+      background-color: var(--header-bg-color, #465569);
+      color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 100;
+      overflow: hidden;
+    }
+    
+    /* Estilos gerais */
+    body {
+      font-family: 'Nunito', sans-serif;
+      overflow-x: hidden;
+      background-color: #f0f2f5;
+    }
+    
+    .auth-logo {
+      display: block;
+      width: 200px;
+      height: auto;
+      margin: 0 auto 20px;
+    }
+
+    /* Logo */
+    .login-modal .auth-logo {
+      display: block;
+      margin: 0 auto 1rem;
+      max-width: 50px;
+    }
+
+    /* Estilos para ajustar as cores do formulário de login para verde */
+    .login-modal .btn-primary {
+      background-color: rgba(22, 160, 133, 0.9);
+      border-color: rgba(22, 160, 133, 1);
+    }
+
+    .login-modal .btn-primary:hover,
+    .login-modal .btn-primary:focus,
+    .login-modal .btn-primary:active {
+      background-color: rgba(22, 160, 133, 1);
+      border-color: rgba(22, 160, 133, 1);
+    }
+
+    .login-modal .form-control:focus {
+      border-color: rgba(22, 160, 133, 0.5);
+      box-shadow: 0 0 0 0.25rem rgba(22, 160, 133, 0.25);
+    }
+
+    .login-modal .alert-primary {
+      background-color: rgba(22, 160, 133, 0.2);
+      border-color: rgba(22, 160, 133, 0.3);
+      color: rgba(22, 160, 133, 1);
+    }
+
+    .login-modal .forgot-password {
+      color: rgba(22, 160, 133, 0.8);
+      text-decoration: none;
+    }
+
+    .login-modal .forgot-password:hover {
+      color: rgba(22, 160, 133, 1);
+      text-decoration: underline;
+    }
+
+    /* Cor dos ícones dentro das caixas de texto */
+    .login-modal .input-icon i {
+      color: rgba(22, 160, 133, 0.8);
+    }
+
+    .login-modal .input-icon:hover i,
+    .login-modal .input-icon .form-control:focus + i {
+      color: rgba(22, 160, 133, 1);
+    }
+
+    /* Tela de carregamento e ocultação inicial do conteúdo */
+    #splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(70, 85, 105, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease-out;
+    }
+    
+    #splash-screen .splash-logo {
+      width: 150px;
+      height: auto;
+      margin-bottom: 20px;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    #splash-screen .splash-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: rgba(255, 255, 255, 0.9);
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Esconder o conteúdo principal inicialmente */
+    body.not-authenticated .header,
+    body.not-authenticated #container {
+      display: none;
+    }
+
+    /* Vibecode: Garante que o preview do puxador comece oculto */
+    #puxador-preview-container {
+      display: none;
+    }
+  </style>
+  <!-- Script para prevenir zoom -->
+  <script>
+    // Prevenir gestos de zoom
+    document.addEventListener('gesturestart', function(e) {
+      e.preventDefault();
+    });
+    
+    // Prevenir zoom com scroll de mouse combinado com tecla ctrl
+    document.addEventListener('wheel', function(e) {
+      if(e.ctrlKey) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    
+    // Prevenir zoom com pinça em touch screens
+    document.addEventListener('touchmove', function(e) {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
+  <!-- Estilos para o módulo de cadastramento -->
+  <link rel="stylesheet" href="css/cadastramento.css">
+</head>
+
+<body class="not-authenticated">
+  <!-- Tela de carregamento -->
+  <div id="splash-screen">
+    <img src="LOGO 2.png" alt="Logo Conecta" class="splash-logo">
+    <div class="splash-spinner"></div>
+  </div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="logo-container">
+        <img src="LOGO 2.png" alt="Logo Conecta" class="logo" id="logoImage">
+      </div>
+      <span id="parceiro-nome">Conecta Soluções</span>
+      <div id="userInfoContainer" class="user-info-container"></div>
+    </div>
+  </header>
+
+  <!-- Container principal -->
+  <div id="container">
+    <!-- SIDEBAR: PAINEL DE CONTROLE com Bootstrap 5 -->
+    <div class="sidebar-bootstrap">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">Configuração da Porta</h2>
+      </div>
+      
+      <!-- Botão Novo Projeto -->
+      <div class="novo-projeto-container">
+        <button id="btnNovoProjeto" class="btn btn-novo-projeto">
+          <i class="bi bi-file-earmark-plus"></i>
+          <span>Novo Projeto</span>
+        </button>
+      </div>
+
+      <!-- Accordion do Bootstrap para seções expansíveis -->
+      <div class="accordion accordion-flush" id="configAccordion">
+        
+        <!-- Seção: Informações -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingInfos">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInfos" aria-expanded="false" aria-controls="collapseInfos" style="background-color: rgba(22, 160, 133, 0.12); border-left-color: rgba(22, 160, 133, 0.5);">
+              <i class="bi bi-info-circle section-icon"></i>INFORMAÇÕES
+            </button>
+          </h2>
+          <div id="collapseInfos" class="accordion-collapse collapse" aria-labelledby="headingInfos" data-bs-parent="#configAccordion">
+            <div class="accordion-body">
+              <div class="mb-3">
+                <label for="clienteInput" class="form-label">Cliente</label>
+                <input type="text" class="form-control" id="clienteInput" maxlength="30" required />
+              </div>
+              <div class="mb-3">
+                <label for="ambienteInput" class="form-label">Ambiente</label>
+                <input type="text" class="form-control" id="ambienteInput" maxlength="30" required />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seção: Função -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingFuncao">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFuncao" aria-expanded="false" aria-controls="collapseFuncao" data-force-update="true">
+              <i class="bi bi-door-open section-icon"></i>Função da Porta
+            </button>
+          </h2>
+          <div id="collapseFuncao" class="accordion-collapse collapse" aria-labelledby="headingFuncao" data-bs-parent="#configAccordion">
+            <div class="accordion-body">
+              <div class="mb-3">
+                <label for="funcaoPorta" class="form-label">Tipo de Porta</label>
+                <select id="funcaoPorta" class="form-select">
+                  <option value="superiorDireita">Abrir Superior Direita</option>
+                  <option value="superiorEsquerda">Abrir Superior Esquerda</option>
+                  <option value="inferiorDireita">Abrir Inferior Direita</option>
+                  <option value="inferiorEsquerda">Abrir Inferior Esquerda</option>
+                  <option value="basculante">Basculante</option>
+                  <option value="deslizante">Deslizante</option>
+                </select>
+              </div>
+
+              <!-- Seção específica para porta deslizante -->
+              <div id="sectionDeslizante" style="display: none;">
+                <div class="mb-3">
+                  <label for="modeloDeslizante" class="form-label">Modelo do Sistema Deslizante</label>
+                  <select id="modeloDeslizante" class="form-select">
+                    <option value="RO-654025">RO-654025</option>
+                    <option value="RO-654030">RO-654030</option>
+                    <option value="KIT-4545">KIT-4545</option>
+                    <option value="KIT-6060">KIT-6060</option>
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="trilhoDeslizante" class="form-label">Tipo de Trilho</label>
+                  <select id="trilhoDeslizante" class="form-select">
+                    <option value="Embutir">Embutir</option>
+                    <option value="Sobrepor">Sobrepor</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Seção: Medidas -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingMedidas">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMedidas" aria-expanded="false" aria-controls="collapseMedidas">
+              <i class="bi bi-rulers section-icon"></i>Medidas
+            </button>
+          </h2>
+          <div id="collapseMedidas" class="accordion-collapse collapse" aria-labelledby="headingMedidas" data-bs-parent="#configAccordion">
+            <div class="accordion-body">
+              <div class="mb-3">
+                <label for="larguraInput" class="form-label">Largura (mm)</label>
+                <input type="number" class="form-control" id="larguraInput" value="450" min="200" max="1500" required />
+                <div class="invalid-feedback" id="larguraError">Largura deve ser entre 200 e 1500 mm</div>
+              </div>
+              <div class="mb-3">
+                <label for="alturaInput" class="form-label">Altura (mm)</label>
+                <input type="number" class="form-control" id="alturaInput" value="450" min="200" max="3000" required 
+                       onchange="if(this.value >= 200 && this.value <= 3000) { 
+                         const altura = parseInt(this.value);
+                         if (typeof window.definirNumeroDobradicas === 'function') {
+                           window.definirNumeroDobradicas(altura);
+                         }
+                       }" />
+                <div class="invalid-feedback" id="alturaError">Altura deve ser entre 200 e 3000 mm</div>
+              </div>
+              <div class="mb-3">
+                <label for="quantidadeInput" class="form-label">Quantidade</label>
+                <input type="number" class="form-control" id="quantidadeInput" value="1" min="1" max="100" required />
+                <div class="invalid-feedback" id="quantidadeError">Quantidade deve ser entre 1 e 100</div>
+              </div>
+              <div class="mb-3" id="parCheckboxContainer" style="display: none;">
+                <div class="card border-primary shadow-sm p-1" style="min-height:unset; height:30px; background-color: rgba(255, 255, 255, 0.1);">
+                  <div class="d-flex justify-content-start align-items-center gap-2" style="height:100%; min-height:unset;">
+                    <input class="form-check-input" type="checkbox" id="parCheckbox" style="transform: scale(1.2); margin-top: 0;">
+                    <i class="bi bi-columns-gap" style="font-size: 1.2rem; color: var(--primary-color);"></i>
+                    <label class="form-label mb-0" for="parCheckbox" style="font-size: 1rem; font-weight: 500; color: #fff;">Porta em Par</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- NOVA SESSÃO: Dobradiças (movida para fora de Função da Porta) -->
+        <div class="accordion-item"><!-- Adicionado conforme solicitação Vibecode: separar dobradiças em sessão própria -->
+          <h2 class="accordion-header" id="headingDobradicas">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDobradicas" aria-expanded="false" aria-controls="collapseDobradicas">
+              <i class="bi bi-box-arrow-in-down section-icon"></i>Dobradiças
+            </button>
+          </h2>
+          <div id="collapseDobradicas" class="accordion-collapse collapse" aria-labelledby="headingDobradicas" data-bs-parent="#configAccordion">
+            <div class="accordion-body">
+              <div class="mb-3">
+                <label for="numDobradicasInput" class="form-label">Quantidade</label>
+                <select id="numDobradicasInput" class="form-select">
+                  <option value="S/Dobradiças">S/Dobradiças</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4" selected>4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                </select>
+              </div>
+              <div id="dobradicasCampos" class="mt-3">
+                <!-- Os campos de dobradiças serão gerados dinamicamente -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- FIM DA NOVA SESSÃO DE DOBRADIÇAS -->
+
+        <!-- Seção: Puxador -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingPuxador">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePuxador" aria-expanded="false" aria-controls="collapsePuxador">
+              <i class="bi bi-grip-vertical section-icon"></i>Puxador
+            </button>
+          </h2>
+          <div id="collapsePuxador" class="accordion-collapse collapse" aria-labelledby="headingPuxador" data-bs-parent="#configAccordion">
+            <div class="accordion-body">
+              <div class="mb-3">
+                <label for="puxadorModelo" class="form-label">Modelo</label>
+                <select id="puxadorModelo" class="form-select">
+                  <!-- Opções serão carregadas dinamicamente via JS -->
+                </select>
+              </div>
+              <div class="mb-3" id="puxadorPosicaoDiv">
+                <label class="form-label">Posição</label>
+                <div class="position-options">
+                  <div class="card border-primary shadow-sm p-1 mb-2" style="min-height:unset; height:30px; background-color: rgba(255, 255, 255, 0.1);">
+                    <div class="d-flex justify-content-start align-items-center gap-2" style="height:100%; min-height:unset;">
+                      <input class="form-check-input" type="checkbox" id="posicaoVertical" checked style="transform: scale(1.2); margin-top: 0;">
+                      <i class="bi bi-arrows-vertical" style="font-size: 1.2rem; color: var(--primary-color);"></i>
+                      <label class="form-label mb-0" for="posicaoVertical" style="font-size: 1rem; font-weight: 500; color: #fff;">Vertical</label>
+                    </div>
+                  </div>
+                  <div class="card border-primary shadow-sm p-1" style="min-height:unset; height:30px; background-color: rgba(255, 255, 255, 0.1);">
+                    <div class="d-flex justify-content-start align-items-center gap-2" style="height:100%; min-height:unset;">
+                      <input class="form-check-input" type="checkbox" id="posicaoHorizontal" style="transform: scale(1.2); margin-top: 0;">
+                      <i class="bi bi-arrows-horizontal" style="font-size: 1.2rem; color: var(--primary-color);"></i>
+                      <label class="form-label mb-0" for="posicaoHorizontal" style="font-size: 1rem; font-weight: 500; color: #fff;">Horizontal</label>
+                    </div>
+                  </div>
+                </div>
+                <!-- Campo oculto para compatibilidade com código existente -->
+                <select id="puxadorPosicao" class="form-select" style="display:none;">
+                  <option value="vertical" selected>Vertical</option>
+                  <option value="horizontal">Horizontal</option>
+                </select>
+              </div>
+              
+              <div class="mb-3" id="puxadorLadosDiv" style="display: none;">
+                <label for="puxadorLados" class="form-label">Lados</label>
+                <select id="puxadorLados" class="form-select">
+                  <option value="esquerdo">Esquerdo</option>
+                  <option value="direito">Direito</option>
+                  <option value="ambos">2 Lados</option>
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label for="puxadorMedida" class="form-label">Medida</label>
+                <select id="puxadorMedida" class="form-select">
+                  <option value="Porta Inteira">Porta Inteira</option>
+                  <option value="100">100 mm</option>
+                  <option value="150" selected>150 mm</option>
+                  <option value="200">200 mm</option>
+                  <option value="300">300 mm</option>
+                  <option value="400">400 mm</option>
+                  <option value="500">500 mm</option>
+                  <option value="600">600 mm</option>
+                  <option value="700">700 mm</option>
+                  <option value="800">800 mm</option>
+                  <option value="900">900 mm</option>
+                  <option value="1000">1000 mm</option>
+                </select>
+              </div>
+              
+              <!-- Campos de cotas do puxador -->
+              <div id="puxadorCotasCampos" class="mt-3">
+                <!-- Campos para puxador vertical -->
+                <div id="cotasVertical">
+                  <div class="cota-field mb-2">
+                    <div class="cota-label">Cota Sup:</div>
+                    <div class="flex-grow-1"></div>
+                    <input type="number" id="puxadorCotaSuperior" class="cota-input" min="0" max="3000" value="950" />
+                  </div>
+                  
+                  <div class="cota-field">
+                    <div class="cota-label">Cota Inf:</div>
+                    <div class="flex-grow-1"></div>
+                    <input type="number" id="puxadorCotaInferior" class="cota-input" min="0" max="3000" value="1000" />
+                  </div>
+                </div>
+                
+                <!-- Campo para puxador horizontal -->
+                <div id="cotasHorizontal" style="display: none;">
+                  <div class="cota-info">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seção: Materiais -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingMateriais">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMateriais" aria-expanded="false" aria-controls="collapseMateriais">
+              <i class="bi bi-tools section-icon"></i>Materiais
+            </button>
+          </h2>
+          <div id="collapseMateriais" class="accordion-collapse collapse" aria-labelledby="headingMateriais" data-bs-parent="#configAccordion">
+            <div class="accordion-body">
+              <div class="mb-3">
+                <label for="vidroTipo" class="form-label">Vidro</label>
+                <select id="vidroTipo" class="form-select">
+                  <option value="Incolor">Incolor</option>
+                  <option value="Espelho">Espelho</option>
+                  <option value="Espelho Bronze">Espelho Bronze</option>
+                  <option value="Espelho Fumê">Espelho Fumê</option>
+                  <option value="Refleta Bronze">Refleta Bronze</option>
+                  <option value="Refleta Fume">Refleta Fume</option>
+                  <option value="Refleta Prata">Refleta Prata</option>
+                  <option value="Fumê">Fumê</option>
+                  <option value="Branco">Branco</option>
+                  <option value="Super Branco">Super Branco</option>
+                  <option value="Preto">Preto</option>
+                  <option value="Canelado">Canelado</option>
+                  <option value="Acidato">Acidato</option>
+                  <option value="Acidato Fume">Acidato Fume</option>
+                  <option value="Mini Boreal">Mini Boreal</option>
+                  <option value="Colorido">Colorido (Obs)</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="perfilModelo" class="form-label">Modelo do Perfil</label>
+                <select id="perfilModelo" class="form-select">
+                  <option value="RM-059">RM-059 (borda larga)</option>
+                  <option value="RM-060">RM-060 (borda fina)</option>
+                  <option value="RM-119">RM-119 (borda muito fina)</option>
+                  <option value="RM-377">RM-377 (borda oculta)</option>
+                  <option value="RM-114">RM-114 (sem borda)</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="perfilCor" class="form-label">Cor do Perfil</label>
+                <select id="perfilCor" class="form-select">
+                  <option value="Anodizado">Anodizado</option>
+                  <option value="Branco">Branco</option>
+                  <option value="Preto">Preto</option>
+                  <option value="Bronze">Bronze</option>
+                  <option value="Champagne">Champagne</option>
+                  <option value="Dourado">Dourado</option>
+                  <option value="Inox">Inox</option>
+                  <option value="Colorido/Especial">Colorido/Especial</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seção: Observações (Botão para abrir modal) -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingObs">
+            <button class="accordion-button collapsed modal-trigger" type="button" data-bs-toggle="modal" data-bs-target="#observacoesModal" id="btnAbrirObservacoes">
+              <i class="bi bi-pencil-square section-icon"></i>OBSERVAÇÕES
+            </button>
+          </h2>
+        </div>
+
+        <!-- Seção: Gerenciamento -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingGerenciamento">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGerenciamento" aria-expanded="false" aria-controls="collapseGerenciamento">
+              <i class="bi bi-gear section-icon"></i>GERENCIAMENTO
+            </button>
+          </h2>
+          <div id="collapseGerenciamento" class="accordion-collapse collapse" aria-labelledby="headingGerenciamento" data-bs-parent="#configAccordion">
+            <div class="accordion-body">
+              <div class="mb-3">
+                <button class="btn btn-primary w-100" id="btnGerenciarUsuarios" data-bs-toggle="modal" data-bs-target="#usuariosModal">
+                  <i class="bi bi-people-fill me-2"></i>Usuários
+                </button>
+              </div>
+              <div class="mb-3">
+                <button class="btn btn-primary w-100" id="btnCadastramento" data-bs-toggle="modal" data-bs-target="#cadastramentoModal">
+                  <i class="bi bi-database-fill me-2"></i>Cadastramento
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botões de ação do sidebar -->
+      <div class="sidebar-actions">
+        <button id="btnImprimir" class="btn btn-primary">
+          <i class="bi bi-printer"></i>
+          <span>Imprimir</span>
+        </button>
+        
+        <button id="btnSalvarRapido" class="btn btn-success" style="background-color: rgba(22, 160, 133, 0.8); border-color: rgba(22, 160, 133, 1);">
+          <i class="bi bi-save"></i>
+          <span>Salvar</span>
+        </button>
+        
+        <button id="btnCarregarProjetos" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#projetosModal">
+          <i class="bi bi-folder-fill"></i>
+          <span>Projetos</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Vibecode: Div para pré-visualização da foto do puxador -->
+    <div id="puxador-preview-container"></div>
+
+    <!-- Área do desenho -->
+    <div class="canvas-container a4-paper-simulation">
+      <div id="desenho"></div>
+    </div>
+  </div>
+
+  <!-- Modal de Observações -->
+  <div class="modal fade" id="observacoesModal" tabindex="-1" aria-labelledby="observacoesModalLabel">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="observacoesModalLabel">Observações</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <textarea id="observacaoInput" class="form-control" rows="6" placeholder="Observações adicionais sobre o pedido"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          <button type="button" class="btn btn-primary" id="btnSalvarObservacoes">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal de Gerenciamento de Usuários -->
+  <div class="modal fade modal-draggable" id="usuariosModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="usuariosModalLabel">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="usuariosModalLabel">
+            <i class="bi bi-people-fill"></i> Gerenciamento de Usuários
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body px-3 py-2">
+          <div class="d-flex justify-content-end mb-2">
+            <button type="button" class="btn btn-success btn-sm" id="btnNovoUsuario">
+              <i class="bi bi-person-plus-fill"></i> Novo Usuário
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm">
+              <thead>
+                <!-- Cabeçalho da tabela será gerado dinamicamente em JS -->
+              </thead>
+              <tbody id="tabelaUsuarios">
+                <!-- Os usuários serão carregados aqui -->
+                <tr>
+                  <td colspan="6" class="text-center">Carregando usuários...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Formulário de Usuário -->
+  <div class="modal fade modal-draggable" id="usuarioFormModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="usuarioFormModalLabel">
+    <div class="modal-dialog modal-dialog-centered modal-md" style="width: 440px !important; max-width: 90% !important;">
+      <div class="modal-content">
+        <div class="modal-header py-2">
+          <h5 class="modal-title" id="usuarioFormModalLabel">
+            <i class="bi bi-person-fill"></i> <span id="tituloFormUsuario">Novo Usuário</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="text-center mb-4">
+            <img src="LOGO 2.png" alt="Logo Conecta Móveis" class="auth-logo">
+          </div>
+          <form id="formUsuario">
+            <input type="hidden" id="usuarioId" name="id">
+            
+            <div class="mb-2">
+              <label for="usuarioNome" class="form-label">Nome</label>
+              <input type="text" class="form-control form-control-sm" id="usuarioNome" name="nome" required>
+              <div class="invalid-feedback">Por favor, informe o nome do usuário.</div>
+            </div>
+            
+            <div class="mb-2">
+              <label for="usuarioEmail" class="form-label">Email</label>
+              <input type="email" class="form-control form-control-sm" id="usuarioEmail" name="email" required>
+              <div class="invalid-feedback">Por favor, informe um email válido.</div>
+            </div>
+            
+            <div class="mb-2">
+              <label for="usuarioEmpresa" class="form-label">Empresa</label>
+              <input type="text" class="form-control form-control-sm" id="usuarioEmpresa" name="empresa" required>
+              <div class="invalid-feedback">Por favor, informe a empresa do usuário.</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnSalvarUsuario">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmação de Exclusão -->
+  <div class="modal fade modal-draggable" id="confirmarExclusaoModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="confirmarExclusaoModalLabel">
+    <div class="modal-dialog modal-dialog-centered modal-md" style="width: 440px !important; max-width: 90% !important;">
+      <div class="modal-content">
+        <div class="modal-header py-2">
+          <h5 class="modal-title" id="confirmarExclusaoModalLabel">
+            <i class="bi bi-exclamation-triangle-fill text-danger"></i> Confirmar Exclusão
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <p>Tem certeza que deseja excluir o usuário <strong id="nomeUsuarioExclusao"></strong>?</p>
+          <p class="text-danger small">Esta ação não poderá ser desfeita.</p>
+          <input type="hidden" id="idUsuarioExclusao">
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger btn-sm" id="btnConfirmarExclusao">Excluir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Projetos Salvos -->
+  <div class="modal fade modal-draggable" id="projetosModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="projetosModalLabel">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="projetosModalLabel">
+            <i class="bi bi-folder2-open"></i> Projetos Salvos
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body px-3 py-2">
+          <div class="table-responsive">
+            <div id="savedConfigs" class="saved-projects-container">
+              <!-- Os projetos salvos serão carregados aqui -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Login -->
+  <div class="modal fade login-modal" id="loginModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <!-- Ícone removido -->
+          <!-- Botão de fechar removido propositalmente -->
+        </div>
+        <div class="modal-body">
+          <div class="text-center mb-4">
+            <img src="LOGO 2.png" alt="Logo Conecta Móveis" class="auth-logo">
+          </div>
+          <form id="loginForm">
+            <div class="mb-3 input-icon">
+              <i class="bi bi-person"></i>
+              <input type="text" class="form-control form-control-lg" id="loginNome" placeholder="Digite seu nome" required>
+            </div>
+            <div class="mb-3 input-icon">
+              <i class="bi bi-envelope"></i>
+              <input type="email" class="form-control form-control-lg" id="loginEmail" placeholder="Digite seu email" required>
+            </div>
+            <div class="d-grid">
+              <button type="button" class="btn btn-primary btn-lg" id="btnLoginSubmit">Entrar</button>
+            </div>
+            <a href="#" class="forgot-password">Esqueceu sua senha?</a>
+            <div id="loginMessage" class="alert d-none mt-3"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal de Cadastro -->
+  <div class="modal fade login-modal" id="cadastroModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="cadastroModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <i class="bi bi-person-plus-fill" style="color: rgba(22, 160, 133, 0.9); font-size: 1.2rem; margin-right: 8px;"></i>
+          <!-- Botão de fechar removido propositalmente para o modal de cadastro -->
+        </div>
+        <div class="modal-body">
+          <div class="text-center mb-4">
+            <img src="LOGO 2.png" alt="Logo Conecta Móveis" class="auth-logo">
+          </div>
+          <form id="cadastroForm">
+            <div class="mb-3 input-icon">
+              <i class="bi bi-person"></i>
+              <input type="text" class="form-control form-control-lg" id="cadastroNome" placeholder="Digite seu nome" required>
+            </div>
+            <div class="mb-3 input-icon">
+              <i class="bi bi-envelope"></i>
+              <input type="email" class="form-control form-control-lg" id="cadastroEmail" placeholder="Digite seu email" required>
+            </div>
+            <div class="mb-3 input-icon">
+              <i class="bi bi-building"></i>
+              <input type="text" class="form-control form-control-lg" id="cadastroEmpresa" placeholder="Nome da empresa" required>
+            </div>
+            <div class="d-grid">
+              <button type="button" class="btn btn-primary btn-lg" id="btnCadastroSubmit">Cadastrar</button>
+            </div>
+            <div id="cadastroMessage" class="alert d-none mt-3"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Cadastramento -->
+  <div class="modal fade modal-draggable" id="cadastramentoModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="cadastramentoModalLabel">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cadastramentoModalLabel">
+            <i class="bi bi-database-fill"></i> Cadastramento
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body px-3 py-2">
+          <!-- Adicionar navegação por abas -->
+          <ul class="nav nav-tabs mb-3" id="cadastramentoTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="puxadores-tab" data-bs-toggle="tab" data-bs-target="#puxadores-content" type="button" role="tab" aria-controls="puxadores-content" aria-selected="true">
+                <i class="bi bi-grip-vertical me-1"></i>Puxadores
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="vidros-tab" data-bs-toggle="tab" data-bs-target="#vidros-content" type="button" role="tab" aria-controls="vidros-content" aria-selected="false">
+                <i class="bi bi-window me-1"></i>Vidros
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="perfis-tab" data-bs-toggle="tab" data-bs-target="#perfis-content" type="button" role="tab" aria-controls="perfis-content" aria-selected="false">
+                <i class="bi bi-bounding-box me-1"></i>Perfis
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="trilhos-tab" data-bs-toggle="tab" data-bs-target="#trilhos-content" type="button" role="tab" aria-controls="trilhos-content" aria-selected="false">
+                <i class="bi bi-dash-lg me-1"></i>Trilhos
+              </button>
+            </li>
+          </ul>
+          
+          <!-- Conteúdo das abas -->
+          <div class="tab-content" id="cadastramentoTabsContent">
+            <!-- Aba Puxadores -->
+            <div class="tab-pane fade show active" id="puxadores-content" role="tabpanel" aria-labelledby="puxadores-tab">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0"><i class="bi bi-grip-vertical me-1"></i>Lista de Puxadores</h6>
+                <button type="button" class="btn btn-success btn-sm" id="btnNovoPuxador">
+                  <i class="bi bi-plus-circle-fill"></i> Novo Puxador
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm">
+                  <thead>
+                    <tr>
+                      <th scope="col">Modelo</th>
+                      <th scope="col">Fabricante</th>
+                      <th scope="col">Cor</th>
+                      <th scope="col">Medida</th>
+                      <th scope="col">Usuário</th>
+                      <th scope="col" class="text-center">Foto</th>
+                      <th scope="col" class="text-end">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabelaPuxadores">
+                    <tr>
+                      <td colspan="7" class="text-center">Carregando puxadores...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <!-- Aba Vidros -->
+            <div class="tab-pane fade" id="vidros-content" role="tabpanel" aria-labelledby="vidros-tab">
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                Funcionalidade de cadastro de vidros em desenvolvimento.
+              </div>
+            </div>
+            
+            <!-- Aba Perfis -->
+            <div class="tab-pane fade" id="perfis-content" role="tabpanel" aria-labelledby="perfis-tab">
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                Funcionalidade de cadastro de perfis em desenvolvimento.
+              </div>
+            </div>
+            
+            <!-- Aba Trilhos -->
+            <div class="tab-pane fade" id="trilhos-content" role="tabpanel" aria-labelledby="trilhos-tab">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0"><i class="bi bi-dash-lg me-2"></i>Lista de Trilhos</h6>
+                <button class="btn btn-primary btn-sm" id="btnNovoTrilho">
+                  <i class="bi bi-plus-circle"></i> Novo Trilho
+                </button>
+              </div>
+              
+              <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Tipo</th>
+                      <th>Fabricante</th>
+                      <th>Material</th>
+                      <th>Cor</th>
+                      <th>Usuário</th>
+                      <th>Foto</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabelaTrilhos">
+                    <!-- Dados serão carregados dinamicamente -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Formulário de Cadastro -->
+  <div class="modal fade modal-draggable" id="cadastroFormModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="cadastroFormModalLabel">
+    <div class="modal-dialog modal-dialog-centered modal-md" style="width: 440px !important; max-width: 90% !important;">
+      <div class="modal-content">
+        <div class="modal-header py-2">
+          <h5 class="modal-title" id="cadastroFormModalLabel">
+            <i class="bi bi-database-fill"></i> <span id="tituloFormCadastro">Novo Puxador</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formCadastro">
+            <input type="hidden" id="itemId" name="id">
+            
+            <div class="mb-2">
+              <label for="itemModelo" class="form-label">Modelo</label>
+              <input type="text" class="form-control form-control-sm" id="itemModelo" name="modelo" required>
+              <div class="invalid-feedback">Por favor, informe o modelo do puxador.</div>
+            </div>
+            
+            <div class="mb-2">
+              <label for="itemFabricante" class="form-label">Fabricante</label>
+              <input type="text" class="form-control form-control-sm" id="itemFabricante" name="fabricante">
+              <div class="invalid-feedback">Por favor, informe o fabricante.</div>
+            </div>
+            
+            <div class="mb-2">
+              <label for="itemCor" class="form-label">Cor</label>
+              <input type="text" class="form-control form-control-sm" id="itemCor" name="cor">
+              <div class="invalid-feedback">Por favor, informe a cor.</div>
+            </div>
+            
+            <div class="mb-2">
+              <label for="itemMedida" class="form-label">Medida</label>
+              <input type="text" class="form-control form-control-sm" id="itemMedida" name="medida" required>
+              <div class="invalid-feedback">Por favor, informe a medida do puxador.</div>
+            </div>
+            
+            <div class="mb-2">
+              <label for="itemFoto" class="form-label">Foto</label>
+              <input type="file" class="form-control form-control-sm" id="itemFoto" name="foto" accept="image/*">
+              <div class="invalid-feedback">Por favor, selecione uma imagem válida.</div>
+              <div class="form-text">Tamanho máximo: 5MB. Formatos: JPG, PNG, GIF.</div>
+              <div id="fotoPreviewContainer" class="mt-2 text-center d-none">
+                <img id="fotoPreview" class="img-thumbnail" style="max-height: 120px; max-width: 100%;" />
+                <button type="button" id="btnRemoverFoto" class="btn btn-sm btn-danger mt-1">
+                  <i class="bi bi-trash"></i> Remover foto
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnSalvarCadastro">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmação de Exclusão de Item -->
+  <div class="modal fade modal-draggable" id="confirmarExclusaoItemModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="confirmarExclusaoItemModalLabel">
+    <div class="modal-dialog modal-dialog-centered modal-md" style="width: 440px !important; max-width: 90% !important;">
+      <div class="modal-content">
+        <div class="modal-header py-2">
+          <h5 class="modal-title" id="confirmarExclusaoItemModalLabel">
+            <i class="bi bi-exclamation-triangle-fill text-danger"></i> Confirmar Exclusão
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <p>Tem certeza que deseja excluir o puxador <strong id="modeloPuxadorExclusao"></strong>?</p>
+          <p class="text-danger small">Esta ação não poderá ser desfeita.</p>
+          <input type="hidden" id="idPuxadorExclusao">
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger btn-sm" id="btnConfirmarExclusaoPuxador">Excluir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de visualização de imagem ampliada -->
+  <div class="modal fade" id="imagemAmpliadaModal" tabindex="-1" aria-labelledby="imagemAmpliadaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header py-2">
+          <h5 class="modal-title" id="imagemAmpliadaModalLabel">
+            <i class="bi bi-image"></i> <span id="modeloPuxadorImagem">Imagem do Puxador</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body text-center p-0">
+          <img id="imagemAmpliada" class="img-fluid" src="" alt="Imagem ampliada do puxador" style="max-height: 70vh;">
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
+  
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@latest/dist/umd/supabase.min.js"></script>
+
+  <!-- SVG Utility -->
+  <script src="https://cdn.jsdelivr.net/npm/svg.js@latest/dist/svg.min.js"></script>
+    
+  <!-- html2canvas e html2pdf -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  
+  <!-- Script principal como ES module -->
+  <script type="module" src="js/main.js"></script>
+
+  <!-- Carrega o módulo de gerenciamento de usuários -->
+  <script type="module">
+    import { inicializarGerenciamentoUsuarios } from './js/usuarios.js';
+    
+    // Inicializar o gerenciamento de usuários quando o DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', () => {
+      // Aguardar um momento para garantir que outros módulos tenham sido carregados
+      setTimeout(() => {
+        inicializarGerenciamentoUsuarios();
+        console.log('✅ Módulo de gerenciamento de usuários inicializado');
+      }, 500);
+    });
+  </script>
+
+  <!-- Carrega o módulo de cadastramento -->
+  <script type="module">
+    import { inicializarCadastramento } from './js/cadastramento.js';
+    
+    // Inicializar o módulo de cadastramento quando o DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', () => {
+      // Aguardar um momento para garantir que outros módulos tenham sido carregados
+      setTimeout(() => {
+        inicializarCadastramento();
+        console.log('✅ Módulo de cadastramento inicializado');
+        
+        // Nota: A inicialização dos tooltips agora é feita dentro do módulo cadastramento.js
+      }, 600);
+    });
+  </script>
+
+  <!-- Carrega o script de novo projeto -->
+  <script type="module">
+    import { iniciarNovoProjeto } from './js/novo-projeto.js';
+    
+    // Configurar botão Novo Projeto
+    document.addEventListener('DOMContentLoaded', () => {
+      const btnNovoProjeto = document.getElementById('btnNovoProjeto');
+      if (btnNovoProjeto) {
+        btnNovoProjeto.addEventListener('click', () => {
+          iniciarNovoProjeto();
+        });
+      }
+      
+      // Iniciar automaticamente com as configurações de novo projeto
+      // Isso será executado após a aplicação estar completamente carregada
+      // Para desativar, basta comentar ou remover essa linha
+      setTimeout(() => {
+        iniciarNovoProjeto();
+        console.log('✅ Projeto iniciado automaticamente com configurações padrão');
+      }, 1500);
+    });
+  </script>
+
+  <!-- Carrega o script de diagnóstico -->
+  <script type="module" src="js/diagnostico.js"></script>
+
+  <!-- Script para ajustar dimensões automaticamente por tipo de porta -->
+  <script src="js/porta-dimensao-auto.js" defer></script>
+
+  <!-- Script para garantir a inicialização dos modais arrastáveis -->
+  <script type="module">
+    import { inicializarModaisDraggable } from './js/modal-draggable.js';
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      // Aguardar um momento para garantir que outros módulos tenham sido carregados
+      setTimeout(() => {
+        inicializarModaisDraggable();
+        console.log('✅ Modais arrastáveis inicializados via script dedicado');
+      }, 1000);
+    });
+  </script>
+
+  <!-- Área de impressão dedicada -->
+  <div id="print-area" class="print-container" style="display: block !important; position: absolute; left: -9999px; top: 0;">
+    <!-- Cabeçalho -->
+    <div class="print-header" style="display: block !important;">
+      <div class="print-header-logo" style="display: block !important;">
+        <!-- Logo implementado de múltiplas formas para garantir compatibilidade -->
+        <img src="LOGO 2 - SVG.svg" id="print-logo" class="print-logo" alt="Logo da empresa" style="max-width:200px; width:auto; height:auto; display:block !important; visibility:visible !important;">
+        
+        <!-- Fallback para o caso do SVG falhar -->
+        <object data="LOGO 2 - SVG.svg" type="image/svg+xml" id="print-logo-object" style="max-width:200px; width:auto; height:auto; display:none;">
+          <img src="img/logo.png" alt="Logo da empresa (fallback)" style="max-width:200px; width:auto; height:auto;">
+        </object>
+        
+        <!-- Segundo fallback - texto caso nenhuma imagem funcione -->
+        <div id="print-logo-text" style="display:none; font-weight:bold; font-size:16px;">LOGO CONECTA</div>
+      </div>
+      <div class="print-header-title">
+        <h2>Descrição da Porta:</h2>
+      </div>
+    </div>
+    
+    <!-- Conteúdo principal -->
+    <div class="print-content">
+      <div class="watermark">ESPECIFICAÇÃO TÉCNICA</div>
+      <div id="svg-container-clone" class="svg-container"></div>
+    </div>
+    
+    <!-- Rodapé -->
+    <div class="print-footer">
+      <div class="print-disclaimer">
+        Este documento é uma especificação técnica. Todas as medidas devem ser confirmadas antes da fabricação.
+      </div>
+    </div>
+  </div>
+  
+  <!-- Nova área para impressão de múltiplas páginas com melhor estrutura -->
+  <div id="print-booklet" class="print-container">
+    <!-- As páginas serão geradas dinamicamente aqui -->
+  </div>
+  
+  <!-- Elemento para impressão clássica (legado) -->
+  <div id="impressaoContainer">
+    <img id="imagemImpressao" alt="Desenho da Porta" style="display: none;">
+  </div>
+
+  <!-- Script de diagnóstico (invisível para usuário) -->
+  <script>
+    // Adicionando um diagnóstico que roda depois de todo carregamento
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        console.log('--- DIAGNÓSTICO DE SVG ---');
+        console.log('1. Container de desenho:', document.getElementById('desenho'));
+        console.log('2. SVG no container:', document.querySelector('#desenho svg'));
+        
+        // Verificar se o módulo de desenho está carregado
+        console.log('3. Funções de desenho disponíveis:', 
+          typeof window.desenharPorta === 'function',
+          typeof window.inicializarCanvas === 'function'
+        );
+        
+        // Tentar inicializar manualmente
+        console.log('4. Tentando inicializar o canvas novamente');
+        if (typeof window.inicializarCanvas === 'function') {
+          window.inicializarCanvas('desenho');
+        }
+        
+        // Verificar novamente após inicialização
+        console.log('5. SVG após inicialização:', document.querySelector('#desenho svg'));
+        
+        // Tentar desenhar a porta manualmente
+        console.log('6. Tentando desenhar a porta manualmente');
+        if (typeof window.desenharPorta === 'function' && typeof window.obterConfiguracaoAtual === 'function') {
+          window.desenharPorta(window.obterConfiguracaoAtual());
+        }
+        
+        // Verificar resultado final
+        console.log('7. SVG final:', document.querySelector('#desenho svg'));
+        console.log('--- FIM DO DIAGNÓSTICO ---');
+      }, 1000); // Aguarda 1 segundo após o carregamento
+    });
+  </script>
+  
+  <!-- Script para garantir que os modais mantenham o tamanho correto -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Função para forçar o redimensionamento dos modais
+      function forcarRedimensionamentoModais() {
+        // Array de IDs dos modais que precisam ser redimensionados
+        const modaisIds = ['usuarioFormModal', 'confirmarExclusaoModal'];
+        
+        modaisIds.forEach(function(id) {
+          const modal = document.getElementById(id);
+          if (!modal) return;
+          
+          // Aplicar o redimensionamento quando o modal estiver prestes a ser exibido
+          modal.addEventListener('show.bs.modal', function() {
+            setTimeout(function() {
+              const dialog = modal.querySelector('.modal-dialog');
+              if (dialog) {
+                dialog.style.width = '440px';
+                dialog.style.maxWidth = '90%';
+                console.log('Redimensionando modal:', id);
+              }
+            }, 0);
+          });
+          
+          // Garantir que o tamanho seja correto mesmo depois de aberto
+          modal.addEventListener('shown.bs.modal', function() {
+            const dialog = modal.querySelector('.modal-dialog');
+            if (dialog) {
+              dialog.style.width = '440px';
+              dialog.style.maxWidth = '90%';
+              console.log('Modal redimensionado após exibição:', id);
+            }
+          });
+        });
+      }
+      
+      // Executar a função
+      forcarRedimensionamentoModais();
+      
+      // Também aplicar estilos aos modais existentes imediatamente
+      const dialogs = document.querySelectorAll('#usuarioFormModal .modal-dialog, #confirmarExclusaoModal .modal-dialog');
+      dialogs.forEach(function(dialog) {
+        dialog.style.width = '440px';
+        dialog.style.maxWidth = '90%';
+      });
+    });
+  </script>
+
+  <!-- Script para controlar o splash screen e autenticação -->
+  <script type="module">
+    import { verificarAutenticacao } from './js/auth.js';
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      // Adicionar classe para evitar flash de conteúdo
+      document.body.classList.add('not-authenticated');
+      
+      // Verificar se o usuário está autenticado
+      const usuarioLogado = verificarAutenticacao();
+      
+      // Ocultar splash screen e exibir conteúdo apropriado
+      setTimeout(() => {
+        const splashScreen = document.getElementById('splash-screen');
+        
+        if (usuarioLogado) {
+          // Se estiver autenticado, remover classe e ocultar splash
+          document.body.classList.remove('not-authenticated');
+          splashScreen.style.opacity = '0';
+          setTimeout(() => {
+            splashScreen.style.display = 'none';
+          }, 300);
+        } else {
+          // Se não estiver autenticado, manter o splashscreen
+          // até que o modal de login seja exibido
+          setTimeout(() => {
+            splashScreen.style.opacity = '0';
+            setTimeout(() => {
+              splashScreen.style.display = 'none';
+            }, 300);
+          }, 200);
+        }
+      }, 800); // Tempo adequado para exibir o splash screen
+    });
+    
+    // Evento para quando o usuário fizer login com sucesso
+    document.addEventListener('usuarioLogado', () => {
+      document.body.classList.remove('not-authenticated');
+    });
+    
+    // Para debug - remover em produção se necessário
+    window.showSplash = () => {
+      const splash = document.getElementById('splash-screen');
+      splash.style.display = 'flex';
+      splash.style.opacity = '1';
+    };
+  </script>
+
+  <!-- Script para configurar o modal de visualização de imagem -->
+  <script type="module">
+    document.addEventListener('DOMContentLoaded', () => {
+      // Abrir o modal de imagem ampliada ao clicar nas miniaturas
+      const imagemAmpliadaModal = document.getElementById('imagemAmpliadaModal');
+      const imagemAmpliada = document.getElementById('imagemAmpliada');
+      const modeloPuxadorImagem = document.getElementById('modeloPuxadorImagem');
+      
+      if (imagemAmpliadaModal && imagemAmpliada) {
+        // Inicializar o modal
+        const modal = new bootstrap.Modal(imagemAmpliadaModal);
+        
+        // Delegação de eventos para capturar cliques em imagens da tabela
+        document.body.addEventListener('click', (event) => {
+          const target = event.target;
+          
+          // Verificar se é uma imagem de thumbnail na tabela de puxadores
+          if (target.tagName === 'IMG' && target.closest('#tabelaPuxadores')) {
+            const modelo = target.closest('tr').querySelector('td:first-child').textContent;
+            
+            // Atualizar a imagem ampliada
+            imagemAmpliada.src = target.src;
+            // Adicionar tratamento de erro para imagem não disponível
+            imagemAmpliada.onerror = function() {
+              imagemAmpliada.onerror = null;
+              imagemAmpliada.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'300\' viewBox=\'0 0 300 300\'%3E%3Crect width=\'300\' height=\'300\' fill=\'%23f5f5f5\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' font-size=\'18\' text-anchor=\'middle\' alignment-baseline=\'middle\' font-family=\'Arial\' fill=\'%23999999\'%3EImagem não disponível%3C/text%3E%3C/svg%3E';
+            };
+            modeloPuxadorImagem.textContent = `Puxador ${modelo}`;
+            
+            // Mostrar o modal
+            modal.show();
+            
+            // Impedir o comportamento padrão
+            event.preventDefault();
+          }
+        });
+        
+        // Adicionar suporte a navegação por teclado
+        imagemAmpliadaModal.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            modal.hide();
+          }
+        });
+      }
+    });
+  </script>
+
+  <!-- Script de diagnóstico para o logo -->
+  <script src="js/diagnostico-logo.js"></script>
+  
+  <!-- Script de correção do logo para impressão -->
+  <script src="js/fix-logo.js"></script>
+  
+  <!-- Script de correção para problemas de impressão -->
+  <script src="js/fix-print.js"></script>
+  
+  <!-- Script específico para inicialização do logo de impressão -->
+  <script>
+    // Inicialização do logo para impressão
+    document.addEventListener('DOMContentLoaded', function() {
+      // Verifica se o objeto SVG deve ser usado em vez da imagem
+      const printLogo = document.getElementById('print-logo');
+      const printLogoObject = document.getElementById('print-logo-object');
+      
+      if (printLogo && printLogoObject) {
+        // Tenta carregar o SVG primeiro
+        printLogo.onload = function() {
+          console.log('Logo SVG carregado com sucesso para impressão');
+        };
+        
+        printLogo.onerror = function() {
+          console.error('Erro ao carregar o logo SVG, usando object como alternativa');
+          // Esconde a imagem e mostra o objeto SVG
+          printLogo.style.display = 'none';
+          printLogoObject.style.display = 'block';
+        };
+        
+        // Verifica se a imagem já está em erro
+        if (printLogo.complete && printLogo.naturalWidth === 0) {
+          printLogo.style.display = 'none';
+          printLogoObject.style.display = 'block';
+        }
+      }
+      
+      // Adiciona evento para garantir que o logo esteja visível antes da impressão
+      window.addEventListener('beforeprint', function() {
+        // Força a visibilidade do logo e seu container
+        const logoContainer = document.querySelector('.print-header-logo');
+        if (logoContainer) {
+          logoContainer.style.display = 'block';
+          logoContainer.style.visibility = 'visible';
+        }
+      });
+    });
+  </script>
+  
+  <!-- Script de diagnóstico e reparo manual -->
+  <script>
+    // Comando para forçar a criação do logo a partir do console
+    window.criarLogoManualmente = function() {
+      console.log('🔧 Criando logo manualmente...');
+      
+      // Verificar área de impressão
+      let printArea = document.getElementById('print-area');
+      if (!printArea) {
+        console.log('🔧 Criando área de impressão...');
+        printArea = document.createElement('div');
+        printArea.id = 'print-area';
+        printArea.className = 'print-container';
+        printArea.style.display = 'block';
+        printArea.style.position = 'absolute';
+        printArea.style.left = '-9999px';
+        printArea.style.top = '0';
+        document.body.appendChild(printArea);
+      }
+      
+      // Verificar cabeçalho de impressão
+      let printHeader = printArea.querySelector('.print-header');
+      if (!printHeader) {
+        console.log('🔧 Criando cabeçalho de impressão...');
+        printHeader = document.createElement('div');
+        printHeader.className = 'print-header';
+        printHeader.style.display = 'block';
+        printArea.appendChild(printHeader);
+      }
+      
+      // Verificar container do logo
+      let logoContainer = printHeader.querySelector('.print-header-logo');
+      if (!logoContainer) {
+        console.log('🔧 Criando container do logo...');
+        logoContainer = document.createElement('div');
+        logoContainer.className = 'print-header-logo';
+        logoContainer.style.display = 'block';
+        printHeader.appendChild(logoContainer);
+      }
+      
+      // Adicionar logo manualmente
+      let logo = document.getElementById('print-logo');
+      if (!logo) {
+        console.log('🔧 Criando elemento do logo...');
+        logo = document.createElement('img');
+        logo.id = 'print-logo';
+        logo.className = 'print-logo';
+        logo.alt = 'Logo da empresa';
+        logo.src = 'LOGO 2 - SVG.svg';
+        logo.style.display = 'block';
+        logo.style.visibility = 'visible';
+        logo.style.opacity = '1';
+        logo.style.maxWidth = '200px';
+        logo.style.width = 'auto';
+        logo.style.height = 'auto';
+        logoContainer.appendChild(logo);
+      }
+      
+      console.log('✅ Logo manualmente criado. Verifique o resultado com:');
+      console.log('   document.getElementById("print-logo")');
+      console.log('Para testar a impressão, execute:');
+      console.log('   window.print()');
+      
+      return '✅ Procedimento concluído';
+    };
+    
+    // Comando para verificar o estado do logo
+    window.verificarLogo = function() {
+      const printLogo = document.getElementById('print-logo');
+      console.log('Estado do logo:', printLogo ? {
+        id: printLogo.id,
+        src: printLogo.src,
+        display: printLogo.style.display,
+        visibility: printLogo.style.visibility,
+        naturalWidth: printLogo.naturalWidth,
+        complete: printLogo.complete
+      } : 'não encontrado');
+      
+      return printLogo;
+    };
+  </script>
+</body>
+
+</html> 

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Módulo Usuários</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      overflow: auto;
+      border: 1px solid #ddd;
+    }
+    .button {
+      background-color: #007bff;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .create-button {
+      background-color: #28a745;
+    }
+    #diagnosticoContainer {
+      margin-top: 30px;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Diagnóstico do Módulo de Usuários</h1>
+  
+  <div class="section">
+    <p>Esta página realiza o diagnóstico do módulo de usuários e sua conexão com o Supabase.</p>
+    
+    <button id="debugBtn" class="button">Executar Diagnóstico</button>
+    <button id="createTableBtn" class="button create-button">Criar Tabela de Usuários</button>
+  </div>
+  
+  <div id="diagnosticoContainer" class="section">
+    <h2>Resultados do Diagnóstico:</h2>
+    <pre id="resultado">Clique no botão para iniciar o diagnóstico...</pre>
+  </div>
+
+  <!-- Carregar Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+  
+  <script type="module">
+    import supabase from './js/db-config.js';
+    
+    document.getElementById('debugBtn').addEventListener('click', async () => {
+      const resultadoEl = document.getElementById('resultado');
+      resultadoEl.textContent = 'Executando diagnóstico...\n';
+      
+      try {
+        // Verificar se a tabela existe
+        resultadoEl.textContent += 'Verificando se a tabela usuarios existe...\n';
+        
+        const { data: tabelas, error: tabelasError } = await supabase
+          .from('pg_catalog.pg_tables')
+          .select('tablename')
+          .eq('schemaname', 'public');
+          
+        if (tabelasError) {
+          resultadoEl.textContent += `Erro ao listar tabelas: ${JSON.stringify(tabelasError, null, 2)}\n`;
+        } else {
+          const tabelasNomes = tabelas.map(t => t.tablename);
+          resultadoEl.textContent += `Tabelas disponíveis: ${JSON.stringify(tabelasNomes, null, 2)}\n`;
+          
+          if (tabelasNomes.includes('usuarios')) {
+            resultadoEl.textContent += 'A tabela usuarios EXISTE no banco de dados.\n';
+          } else {
+            resultadoEl.textContent += 'A tabela usuarios NÃO EXISTE no banco de dados.\n';
+            resultadoEl.textContent += 'Isso explica por que não há dados reais sendo exibidos.\n';
+          }
+        }
+        
+        // Tentar buscar dados
+        resultadoEl.textContent += '\nBuscando dados na tabela usuarios...\n';
+        const { data: usuarios, error, status } = await supabase
+          .from('usuarios')
+          .select('*')
+          .limit(10);
+        
+        if (error) {
+          resultadoEl.textContent += `Erro ao acessar tabela: ${JSON.stringify(error, null, 2)}\n`;
+          resultadoEl.textContent += `Código de status: ${status}\n`;
+          
+          if (error.code === '42P01') {
+            resultadoEl.textContent += 'DIAGNÓSTICO: A tabela não existe no banco de dados.\n';
+            resultadoEl.textContent += 'Os dados mostrados na interface são provavelmente dados de exemplo estáticos no código frontend.\n';
+          }
+        } else {
+          resultadoEl.textContent += 'Conexão bem sucedida\n';
+          resultadoEl.textContent += `Quantidade de registros encontrados: ${usuarios ? usuarios.length : 0}\n`;
+          resultadoEl.textContent += `Dados retornados: ${JSON.stringify(usuarios, null, 2)}\n\n`;
+          
+          if (usuarios && usuarios.length === 0) {
+            resultadoEl.textContent += 'DIAGNÓSTICO: A tabela existe, mas está vazia.\n';
+            resultadoEl.textContent += 'Os dados mostrados na interface são provavelmente dados de exemplo estáticos no código frontend.\n';
+          }
+        }
+        
+        // Comparar com os dados estáticos
+        resultadoEl.textContent += '\nComparando com dados estáticos da interface...\n';
+        const dadosEstaticos = [
+          { nome: 'Admin Árvore Forte', email: 'admin@arvoreforte.com', empresa: 'undefined' },
+          { nome: 'Admin ConstrRapa', email: 'admin@constrap.com', empresa: 'undefined' },
+          { nome: 'Admin Estilo', email: 'admin@estiloedesign.com', empresa: 'undefined' },
+          { nome: 'Admin Excellence', email: 'admin@excellence.com.br', empresa: 'undefined' },
+          { nome: 'Admin Fernandes', email: 'admin@fernandesmoveis.com.br', empresa: 'undefined' },
+          { nome: 'ARTHI COMERCIAL LT', email: 'contabil-leandro@arthi.com.br', empresa: 'undefined' },
+          { nome: 'RICARDO BORGES', email: 'ricardo.nilton@hotmail.com', empresa: 'undefined' },
+          { nome: 'RICARDO NILTON', email: 'ricardo@conectamoveis.net', empresa: 'undefined' }
+        ];
+        
+        resultadoEl.textContent += `Registros estáticos na interface: ${dadosEstaticos.length}\n`;
+        
+        // Conclusão
+        resultadoEl.textContent += '\nCONCLUSÃO:\n';
+        resultadoEl.textContent += '1. O código em usuarios.js tenta buscar dados reais do Supabase\n';
+        resultadoEl.textContent += '2. A interface mostra dados estáticos de exemplo, não dados reais\n';
+        resultadoEl.textContent += '3. Você precisa criar a tabela usuarios no Supabase para que os dados reais sejam exibidos\n';
+        
+      } catch (err) {
+        resultadoEl.textContent += `Erro inesperado: ${err.message}\n`;
+        console.error('Erro completo:', err);
+      }
+    });
+    
+    // Botão para criar a tabela
+    document.getElementById('createTableBtn').addEventListener('click', async () => {
+      const resultadoEl = document.getElementById('resultado');
+      resultadoEl.textContent = 'Criando tabela de usuários no Supabase...\n';
+      
+      try {
+        // Criar a tabela usuarios
+        const { error } = await supabase.rpc('criar_tabela_usuarios');
+        
+        if (error) {
+          const sql = `
+            -- SQL para criar a tabela manualmente
+            CREATE TABLE IF NOT EXISTS public.usuarios (
+              id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+              nome TEXT NOT NULL,
+              email TEXT UNIQUE NOT NULL,
+              empresa TEXT,
+              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+              ultimo_acesso TIMESTAMP WITH TIME ZONE
+            );
+          `;
+          
+          resultadoEl.textContent += `Erro ao criar tabela: ${JSON.stringify(error, null, 2)}\n`;
+          resultadoEl.textContent += 'Você precisa criar esta tabela manualmente no Supabase:\n\n';
+          resultadoEl.textContent += sql + '\n';
+        } else {
+          resultadoEl.textContent += 'Tabela de usuários criada com sucesso!\n';
+          resultadoEl.textContent += 'Agora você pode adicionar usuários reais ao sistema.\n';
+        }
+      } catch (err) {
+        resultadoEl.textContent += `Erro inesperado: ${err.message}\n`;
+        resultadoEl.textContent += 'Você precisará criar a tabela manualmente no Supabase.\n';
+        console.error('Erro completo:', err);
+      }
+    });
+  </script>
+</body>
+</html> 

@@ -1,0 +1,24 @@
+
+
+/* Header com background cinza - marca d'água */
+.print-header-bg {
+  background-color: #f0f0f0; /* Cor de fundo cinza claro */
+  padding: 5px 15px; 
+  margin: 0 0 0 5mm; 
+  width: 95%; 
+  text-align: center;
+
+
+tamanho do logo na tela de impressão 
+  ix-print.js 
+  max-width: 35px !important;
+
+Deslocamento do logo na tela de impressão
+  printing.js
+
+      const logoContainer = document.createElement('div');
+    logoContainer.className = 'print-logo-container';
+    logoContainer.style.position = 'absolute';
+    logoContainer.style.top = '5mm';
+    logoContainer.style.left = '10mm';
+    logoContainer.style.zIndex = '100'; 

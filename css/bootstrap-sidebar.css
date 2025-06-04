@@ -1,0 +1,373 @@
+/* 
+ * Estilos para o sidebar Bootstrap 5
+ * Adaptado para a aplicação Portas Perfis
+ */
+
+/* Estilo principal do sidebar */
+.sidebar-bootstrap {
+  background-color: var(--primary-color);
+  color: white;
+  height: 100%;
+  overflow-y: auto;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  max-width: 300px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 8px 0;
+}
+
+/* Scrollbar personalizada */
+.sidebar-bootstrap::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-bootstrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-bootstrap::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+}
+
+/* Cabeçalho do sidebar */
+.sidebar-header {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(0, 0, 0, 0.2);
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+.sidebar-title {
+  font-size: 1.00rem;
+  font-weight: 600;
+  margin-bottom: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Adaptações para o Accordion do Bootstrap */
+.accordion {
+  --bs-accordion-bg: transparent;
+  --bs-accordion-border-color: rgba(255, 255, 255, 0.1);
+  --bs-accordion-btn-color: white;
+  --bs-accordion-btn-bg: transparent;
+  --bs-accordion-active-bg: rgba(0, 0, 0, 0.25);
+  --bs-accordion-active-color: white;
+  --bs-accordion-btn-focus-border-color: transparent;
+  --bs-accordion-btn-focus-box-shadow: none;
+  --bs-accordion-btn-padding-x: 1rem;
+  --bs-accordion-btn-padding-y: 0.8rem;
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 40px;
+}
+
+/* Botão do accordion - Títulos principais */
+.accordion-button {
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-left: 4px solid rgba(255, 255, 255, 0.521);
+  background-color: rgba(0, 0, 0, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.accordion-button:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-left-color: rgba(255, 255, 255, 0.5);
+}
+
+.accordion-button:not(.collapsed) {
+  box-shadow: none;
+  background-color: rgba(0, 0, 0, 0.25);
+  border-left-color: rgba(255, 255, 255, 0.7);
+  color: #fff;
+}
+
+.accordion-button::after {
+  filter: brightness(5);
+}
+
+/* Botão para abrir modal dentro do accordion */
+.accordion-button.modal-trigger {
+  cursor: pointer;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: var(--bs-accordion-btn-padding-y) var(--bs-accordion-btn-padding-x);
+  color: var(--bs-accordion-btn-color);
+  border-left: 4px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(0, 0, 0, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.accordion-button.modal-trigger:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-left-color: rgba(255, 255, 255, 0.5);
+}
+
+.accordion-button.modal-trigger::after {
+  display: none; /* Remove o ícone de seta do dropdown */
+}
+
+.accordion-button.modal-trigger::before {
+  content: none; /* Removido ícone H2 */
+  font-family: "bootstrap-icons";
+  font-size: 1.2rem;
+  opacity: 0.7;
+  margin-left: auto;
+}
+
+/* Conteúdo do accordion - Área de subtítulos */
+.accordion-body {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  border-left: 4px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Títulos dentro do accordion-body - Subtítulos */
+.accordion-body .form-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 0.4rem;
+  display: block;
+  padding-left: 0.25rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Estilizar os formulários dentro do sidebar */
+.sidebar-bootstrap .form-control,
+.sidebar-bootstrap .form-select {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.sidebar-bootstrap .form-control:focus,
+.sidebar-bootstrap .form-select:focus {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-bootstrap .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilos para corrigir dropdown e opções */
+.sidebar-bootstrap .dropdown-menu,
+.sidebar-bootstrap .form-select option {
+  background-color: #2c3e50; /* Fundo escuro para o dropdown */
+  color: white; /* Texto branco */
+}
+
+.sidebar-bootstrap .form-select option {
+  padding: 8px;
+}
+
+.sidebar-bootstrap .form-select option:hover,
+.sidebar-bootstrap .form-select option:focus,
+.sidebar-bootstrap .form-select option:active,
+.sidebar-bootstrap .form-select option:checked {
+  background-color: #3498db !important; /* Azul para o item selecionado/hover */
+  color: white !important;
+}
+
+/* Estilo para dropdown aberto */
+.sidebar-bootstrap .dropdown-menu.show {
+  padding: 0.5rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-bootstrap .dropdown-item {
+  color: white;
+  padding: 0.5rem 1rem;
+}
+
+.sidebar-bootstrap .dropdown-item:hover,
+.sidebar-bootstrap .dropdown-item:focus {
+  background-color: #3498db;
+  color: white;
+}
+
+/* Adicionar mais espaço entre grupos de formulário */
+.sidebar-bootstrap .mb-3 {
+  margin-bottom: 1rem !important;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-bootstrap .mb-3:last-child {
+  border-bottom: none;
+  margin-bottom: 0 !important;
+  padding-bottom: 0;
+}
+
+/* Botões dentro do sidebar */
+.sidebar-bootstrap .btn-primary {
+  background-color: #ffffff;
+  border-color: #ffffff;
+  color: var(--primary-color);
+}
+
+.sidebar-bootstrap .btn-secondary {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.sidebar-bootstrap .btn-primary:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.9);
+  color: var(--primary-color);
+}
+
+.sidebar-bootstrap .btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Campos de cotas */
+.sidebar-bootstrap .cota-field {
+  display: flex;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border-left: 3px solid rgba(255, 255, 255, 0.5);
+  margin-bottom: 8px;
+}
+
+.sidebar-bootstrap .cota-label {
+  width: 70px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+}
+
+.sidebar-bootstrap .cota-input {
+  width: 100px;
+  padding: 6px 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius);
+  color: white;
+  font-size: 0.9rem;
+}
+
+/* Ícones para seções */
+.section-icon {
+  margin-right: 10px;
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+/* Adaptações para layout responsivo */
+@media screen and (max-width: 900px) {
+  .sidebar-bootstrap {
+    max-width: 100%;
+    height: auto;
+    max-height: 50vh;
+  }
+}
+
+/* Botões de ação fixos na parte inferior */
+.sidebar-actions {
+  display: flex;
+  width: 90%; /* Reduz a largura para garantir que fique dentro do sidebar */
+  max-width: 260px; /* Limita a largura máxima ainda mais */
+  padding: 0.75rem 0.25rem; /* Reduz o padding horizontal e vertical */
+  border-top: 1px solid rgba(255, 255, 255, 0.05); /* Borda mais sutil */
+  background-color: transparent; /* Remove o fundo escuro */
+  gap: 5px; /* Espaçamento entre botões */
+  justify-content: space-between;
+  margin: auto auto 10px; /* Reduz a margem inferior para aproximar do final */
+  box-sizing: border-box; /* Inclui padding e borda no cálculo da largura */
+  position: absolute; /* Posicionamento absoluto em relação ao sidebar */
+  bottom: 0; /* Alinha na parte inferior */
+  left: 0; /* Alinha horizontalmente */
+  right: 0; /* Alinha horizontalmente */
+}
+
+.sidebar-actions .btn {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.2rem; /* Padding reduzido ainda mais */
+  font-size: 0.7rem; /* Fonte menor */
+  letter-spacing: -0.3px; /* Ajuda o texto a caber */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  box-shadow: none; /* Remove sombras que podem aumentar o tamanho visual */
+}
+
+/* Garante que os ícones tenham espaçamento adequado */
+.sidebar-actions .btn i {
+  margin-right: 2px;
+  font-size: 0.8rem;
+}
+
+/* Ajusta tamanho da fonte em telas menores */
+@media (max-width: 350px) {
+  .sidebar-actions .btn {
+    font-size: 0.65rem;
+  }
+  
+  .sidebar-actions .btn i {
+    margin-right: 1px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Alinhamento do texto no botão de Observações */
+.accordion-button.modal-trigger span {
+  flex-grow: 1;
+  text-align: left;
+}
+
+/* Ajustes adicionais para solucionar problemas de rendering em diferentes navegadores */
+/* Isso ajuda a controlar a aparência do select no Chrome e Safari */
+.sidebar-bootstrap select {
+  background-color: #2c3e50 !important;
+  color: white !important;
+  -webkit-appearance: listbox !important;
+  appearance: listbox !important;
+}
+
+/* Firefox precisa de ajustes diferentes */
+@-moz-document url-prefix() {
+  .sidebar-bootstrap .form-select {
+    background-color: #2c3e50;
+    color: white;
+  }
+  .sidebar-bootstrap .form-select option {
+    background-color: #2c3e50;
+  }
+}
+
+/* Estilos para listas suspensas de seleção múltipla (select com multiple) */
+.sidebar-bootstrap select[multiple] {
+  background-color: #2c3e50;
+  color: white;
+} 

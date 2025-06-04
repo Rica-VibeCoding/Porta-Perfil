@@ -1,0 +1,6 @@
+Arquivo temporário - Substituir por uma imagem de logo da empresa.
+
+Para completar a configuração:
+1. Crie ou obtenha uma imagem PNG com o logo da empresa
+2. Renomeie para logo.png
+3. Substitua este arquivo na pasta img/ 

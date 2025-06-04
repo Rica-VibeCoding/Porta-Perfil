@@ -1,0 +1,55 @@
+/* 
+ * Estilos para o botão de Novo Projeto
+ * Para a aplicação Portas Perfis
+ */
+
+/* Botão Novo Projeto */
+.novo-projeto-container {
+  padding: 8px 15px;
+  margin-bottom: -30px;
+}
+
+.btn-novo-projeto {
+  /* Tipografia elegante */
+  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff; /* Letra branca */
+  
+  /* Fundo e borda */
+  background-color: rgba(0, 122, 255, 0.2); /* Azul clarinho com transparência */
+  border: none;
+  border-radius: 8px;
+
+  /* Tamanho e Centralização */
+  width: fit-content;
+  padding: 8px 20px;
+  margin: 16px auto; /* Centraliza horizontalmente dentro da sidebar */
+  display: block; /* Necessário para o margin funcionar */
+
+  /* Ícone + texto */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px; /* Espaço entre ícone e texto */
+
+  /* Sombra sutil */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  /* Animações suaves */
+  transition: background-color 0.4s ease-in-out, transform 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-novo-projeto:hover {
+  background-color: rgba(0, 153, 255, 0.493); /* Mais forte no hover */
+}
+
+.btn-novo-projeto:active {
+  transform: scale(0.96); /* Efeito de toque */
+}
+
+.btn-novo-projeto i {
+  font-size: 1.1rem;
+}
+

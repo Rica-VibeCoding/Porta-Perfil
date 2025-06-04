@@ -1,0 +1,279 @@
+/**
+ * Estilos para o módulo de cadastramento
+ * Sistema de Portas e Perfis
+ */
+
+/* Estilos gerais */
+#cadastramentoModal .table {
+  font-size: 0.85rem;
+  line-height: 1.2;
+  table-layout: fixed;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+#cadastramentoModal .table-responsive {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#cadastramentoModal .table td, 
+#cadastramentoModal .table th {
+  padding: 0.4rem 0.5rem;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#cadastramentoModal .table th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+}
+
+/* Botões de ação */
+.btn-actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 0.25rem;
+  justify-content: flex-end;
+}
+
+#cadastramentoModal .btn-sm {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+}
+
+/* Visualização de imagens */
+.img-thumbnail {
+  transition: transform 0.2s ease;
+}
+
+.img-thumbnail:hover {
+  transform: scale(1.05);
+  cursor: pointer;
+}
+
+#fotoPreviewContainer {
+  transition: all 0.3s ease;
+}
+
+#btnRemoverFoto {
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+#btnRemoverFoto:hover {
+  opacity: 1;
+}
+
+/* Largura das colunas */
+#cadastramentoModal .table th:nth-child(1), /* Modelo */
+#cadastramentoModal .table td:nth-child(1) {
+  width: 18%;
+}
+
+#cadastramentoModal .table th:nth-child(2), /* Fabricante */
+#cadastramentoModal .table td:nth-child(2) {
+  width: 15%;
+}
+
+#cadastramentoModal .table th:nth-child(3), /* Cor */
+#cadastramentoModal .table td:nth-child(3) {
+  width: 12%;
+}
+
+#cadastramentoModal .table th:nth-child(4), /* Medida */
+#cadastramentoModal .table td:nth-child(4) {
+  width: 12%;
+}
+
+#cadastramentoModal .table th:nth-child(5), /* Usuário */
+#cadastramentoModal .table td:nth-child(5) {
+  width: 18%;
+}
+
+#cadastramentoModal .table th:nth-child(6), /* Foto */
+#cadastramentoModal .table td:nth-child(6) {
+  width: 10%;
+  text-align: center;
+}
+
+#cadastramentoModal .table th:nth-child(7), /* Ações */
+#cadastramentoModal .table td:nth-child(7) {
+  width: 15%;
+  text-align: right;
+}
+
+/* Tooltips para textos longos */
+.tooltip-inner {
+  max-width: 300px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
+/* Acessibilidade */
+.a11y-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Foco visual para navegação por teclado */
+.btn:focus-visible,
+.form-control:focus-visible,
+.img-thumbnail:focus-visible {
+  outline: 3px solid rgba(22, 160, 133, 0.5);
+  outline-offset: 2px;
+}
+
+/* Estado de carregamento */
+.loading-placeholder {
+  position: relative;
+  overflow: hidden;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.loading-placeholder::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Responsividade para telas pequenas */
+@media (max-width: 768px) {
+  #cadastramentoModal .table {
+    min-width: 800px;
+  }
+  
+  #cadastramentoModal .modal-dialog {
+    max-width: 96%;
+    margin: 0.5rem auto;
+  }
+}
+
+/* Melhorias de contraste para acessibilidade */
+#btnNovoPuxador {
+  background-color: rgba(22, 160, 133, 0.9);
+  border-color: rgba(22, 160, 133, 1);
+}
+
+#btnNovoPuxador:hover,
+#btnNovoPuxador:focus {
+  background-color: rgba(22, 160, 133, 1);
+  border-color: rgba(22, 160, 133, 1);
+}
+
+/* Melhorias específicas para imagens e tooltips */
+#tabelaPuxadores img.img-thumbnail {
+  transition: transform 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#tabelaPuxadores img.img-thumbnail:hover,
+#tabelaPuxadores img.img-thumbnail:focus {
+  transform: scale(1.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+#tabelaPuxadores img.img-thumbnail:focus {
+  outline: 3px solid rgba(22, 160, 133, 0.5);
+  outline-offset: 2px;
+}
+
+/* Melhorias de responsividade para dispositivos móveis */
+@media (max-width: 767px) {
+  #cadastramentoModal .table {
+    min-width: 800px;
+  }
+  
+  .tooltip {
+    max-width: 200px;
+  }
+  
+  #cadastroFormModal .modal-dialog {
+    margin: 10px auto;
+    max-width: calc(100% - 20px);
+  }
+  
+  #fotoPreviewContainer {
+    max-width: 100%;
+    overflow: hidden;
+  }
+}
+
+/* Melhorias para a visualização da prévia de foto */
+#fotoPreviewContainer {
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: rgba(245, 245, 245, 0.5);
+}
+
+#fotoPreviewContainer.d-none {
+  height: 0;
+  padding: 0;
+  margin: 0;
+}
+
+#fotoPreview {
+  max-height: 120px;
+  max-width: 100%;
+  border-radius: 4px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+#btnRemoverFoto {
+  margin-top: 10px;
+  transition: all 0.2s ease;
+}
+
+#btnRemoverFoto:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Melhorias para o modal de visualização de imagem ampliada */
+#imagemAmpliadaModal .modal-body {
+  background-color: #f8f9fa;
+  padding: 0;
+  border-radius: 0.3rem;
+  overflow: hidden;
+}
+
+#imagemAmpliadaModal img {
+  max-height: 70vh;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+} 

@@ -1,0 +1,31 @@
+/* 
+ * Fix para remover qualquer fundo cinza, bordas ou sombras 
+ * Este arquivo deve ser o último CSS a ser carregado
+ */
+
+/* Elementos principais */
+.canvas-container, 
+#desenho, 
+.design-container, 
+body, 
+html, 
+#container,
+.single-page,
+.svg-container,
+.svg-container-clone,
+#svg-container-clone,
+.specs-table-container {
+  background-color: white !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  filter: none !important;
+}
+
+/* Ajustes para impressão */
+@media print {
+  body, html {
+    background-color: white !important;
+  }
+}
+

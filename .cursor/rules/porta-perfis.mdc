@@ -1,0 +1,15 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+endereço do projeto: http://127.0.0.1:3000/
+
+
+- Sempre use apenas as tecnologias do projeto: HTML5, Tailwind CSS, JavaScript puro, Bootstrap 5, html2canvas, html2pdf.js e SVG.
+- Caso Tailwind e Bootstrap não resolvam, é permitido usar CSS customizado contido no projeto.
+- Mantenha todos os padrões técnicos de desenho definidos na documentação, como IDs únicos, distâncias padronizadas (ex: cotas a 50px), posicionamento técnico e nomenclatura de perfis.
+- Todo código deve funcionar em navegadores modernos e manter a integridade visual na impressão. 
+- Respeite a estrutura modular definida: novos comportamentos devem ser inseridos no módulo apropriado (desenho, interface, armazenamento, etc.).
+- Ao implementar uma nova funcionalidade, preserve integralmente o código existente. Não apague, substitua ou reestruture funções que já estão funcionando, exceto se for explicitamente solicitado.
+
