@@ -2390,6 +2390,71 @@ async function popularPuxadoresSelect() {
 
 
 /**
+ * Popula o select de modelos deslizantes com dados do Supabase
+ */
+async function popularModelosDeslizantesSelect() {
+  const modeloSelect = document.getElementById('modeloDeslizante');
+  if (!modeloSelect) {
+    console.error('[ERRO Vibecode] Select de modelo deslizante (#modeloDeslizante) não encontrado.');
+    return;
+  }
+
+  // Verificar se o cliente Supabase está pronto
+  if (!window.supabaseClient) {
+    console.error('[ERRO Vibecode] Cliente Supabase não está disponível para carregar trilhos.');
+    return;
+  }
+
+  try {
+    console.log('[INFO Vibecode] Buscando modelos de trilhos no Supabase...');
+    const { data, error } = await window.supabaseClient
+      .from('trilhos')
+      .select('nome, tipo')
+      .order('nome');
+
+    if (error) {
+      console.error('[ERRO Vibecode] Erro ao buscar modelos de trilhos:', error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      console.warn('[AVISO Vibecode] Nenhum modelo de trilho encontrado na tabela \'trilhos\'.');
+      return;
+    }
+
+    // Limpar select e popular com trilhos do banco
+    modeloSelect.innerHTML = '';
+    
+    data.forEach(trilho => {
+      if (trilho.nome) {
+        const option = document.createElement('option');
+        option.value = trilho.nome;
+        option.textContent = trilho.nome;
+        modeloSelect.appendChild(option);
+      }
+    });
+
+    console.log(`[INFO Vibecode] ${data.length} modelos de trilhos carregados no select.`);
+
+    // Tentar selecionar o valor padrão
+    const configAtual = window.obterConfiguracaoAtual ? window.obterConfiguracaoAtual() : {};
+    const modeloSalvo = configAtual.modeloDeslizante;
+    
+    if (modeloSalvo && data.some(t => t.nome === modeloSalvo)) {
+      modeloSelect.value = modeloSalvo;
+    } else if (data.length > 0) {
+      modeloSelect.value = data[0].nome;
+    }
+
+    // Disparar evento change para atualizar a UI
+    modeloSelect.dispatchEvent(new Event('change'));
+
+  } catch (catchError) {
+    console.error('[ERRO Vibecode] Exceção ao popular select de trilhos:', catchError);
+  }
+}
+
+/**
  * Inicializa os controles da UI (inputs, selects, botões).
  */
 export function inicializarControlesUI() {
@@ -2408,6 +2473,9 @@ export function inicializarControlesUI() {
   // Popula o select de puxadores com dados do Supabase
   // Chamada agora é assíncrona, mas não esperamos aqui, deixamos popular em background.
   popularPuxadoresSelect(); // Vibecode: Chamada adicionada para carregar modelos dinamicamente
+  
+  // Popula o select de modelos deslizantes com dados do Supabase
+  popularModelosDeslizantesSelect(); // Vibecode: Carregar trilhos do banco
 
   // console.log('[DEBUG Vibecode] Depois de chamar popularPuxadoresSelect (não aguardou).'); // Log 11: Removido
 
@@ -3056,3 +3124,7 @@ function configurarCamposPuxador() {
 // =============================================================================
 // Exemplo: Se alguma função daqui precisar ser chamada por outro módulo
 // export { atualizarVisibilidadeCampos };
+
+// Expor funções necessárias para atualização automática dos selects
+window.popularPuxadoresSelect = popularPuxadoresSelect;
+window.popularModelosDeslizantesSelect = popularModelosDeslizantesSelect;

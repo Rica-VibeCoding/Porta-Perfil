@@ -1015,7 +1015,6 @@
                       <th>Nome</th>
                       <th>Tipo</th>
                       <th>Fabricante</th>
-                      <th>Material</th>
                       <th>Cor</th>
                       <th>Usuário</th>
                       <th>Foto</th>
@@ -1058,14 +1057,14 @@
             </div>
             
             <div class="mb-2">
-              <label for="itemFabricante" class="form-label">Fabricante</label>
-              <input type="text" class="form-control form-control-sm" id="itemFabricante" name="fabricante">
+              <label for="itemFabricante" class="form-label">Fabricante (opcional)</label>
+              <input type="text" class="form-control form-control-sm" id="itemFabricante" name="fabricante" placeholder="Ex: Rometal, Kit (opcional)">
               <div class="invalid-feedback">Por favor, informe o fabricante.</div>
             </div>
             
             <div class="mb-2">
-              <label for="itemCor" class="form-label">Cor</label>
-              <input type="text" class="form-control form-control-sm" id="itemCor" name="cor">
+              <label for="itemCor" class="form-label">Cor (opcional)</label>
+              <input type="text" class="form-control form-control-sm" id="itemCor" name="cor" placeholder="Ex: Branco, Preto (opcional)">
               <div class="invalid-feedback">Por favor, informe a cor.</div>
             </div>
             
@@ -1076,10 +1075,10 @@
             </div>
             
             <div class="mb-2">
-              <label for="itemFoto" class="form-label">Foto</label>
+              <label for="itemFoto" class="form-label">Foto (opcional)</label>
               <input type="file" class="form-control form-control-sm" id="itemFoto" name="foto" accept="image/*">
               <div class="invalid-feedback">Por favor, selecione uma imagem válida.</div>
-              <div class="form-text">Tamanho máximo: 5MB. Formatos: JPG, PNG, GIF.</div>
+              <div class="form-text">Opcional - Tamanho máximo: 5MB. Formatos: JPG, PNG, GIF.</div>
               <div id="fotoPreviewContainer" class="mt-2 text-center d-none">
                 <img id="fotoPreview" class="img-thumbnail" style="max-height: 120px; max-width: 100%;" />
                 <button type="button" id="btnRemoverFoto" class="btn btn-sm btn-danger mt-1">
