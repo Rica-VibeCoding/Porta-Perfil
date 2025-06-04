@@ -74,7 +74,7 @@ export async function verificarEmailCadastrado(email) {
   try {
     const { data, error } = await supabase
       .from('usuarios')
-      .select('id, email, nome, empresa')
+      .select('id, email, nome, perfil')
       .eq('email', email)
       .single();
     
@@ -113,7 +113,7 @@ export async function verificarEmailCadastrado(email) {
         cadastrado: true, 
         id: data.id || '00000000-0000-0000-0000-000000000001', // ID padrão caso não exista
         nome: data.nome,
-        empresa: data.empresa || 'Não definida'
+        empresa: data.perfil || 'Não definida' // Mapear perfil para empresa
       };
     }
     
@@ -392,9 +392,9 @@ async function handleCadastroSubmit() {
     const novoUsuario = {
       nome,
       email,
-      empresa,
-      created_at: new Date().toISOString(),
-      ultimo_acesso: new Date().toISOString()
+      perfil: empresa, // Usar o campo 'perfil' que existe na tabela para armazenar a empresa
+      ativo: true,
+      criado_em: new Date().toISOString()
     };
     
     // Tentar cadastrar o usuário
@@ -402,7 +402,10 @@ async function handleCadastroSubmit() {
     
     if (resultado.success) {
       // Obter o ID real do usuário retornado pelo Supabase
-      let usuarioFinal = { ...novoUsuario };
+      let usuarioFinal = { 
+        ...novoUsuario,
+        empresa: empresa // Manter o campo empresa para o localStorage
+      };
       
       if (resultado.data && resultado.data[0] && resultado.data[0].id) {
         usuarioFinal.id = resultado.data[0].id;
