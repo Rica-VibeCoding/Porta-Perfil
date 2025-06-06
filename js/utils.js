@@ -1,5 +1,175 @@
 // Funções utilitárias
 
+// Constantes de dimensões padrão para diferentes tipos de porta
+const DIMENSOES_PADRAO_PORTAS = {
+  'Abrir Superior Direita': { largura: 450, altura: 2450, quantidade: 1 },
+  'Abrir Superior Esquerda': { largura: 450, altura: 2450, quantidade: 1 },
+  'Abrir Inferior Direita': { largura: 450, altura: 2450, quantidade: 1 },
+  'Abrir Inferior Esquerda': { largura: 450, altura: 2450, quantidade: 1 },
+  'Basculante': { largura: 1000, altura: 450, quantidade: 1 },
+  'Deslizante': { largura: 1000, altura: 2450, quantidade: 1 }
+};
+
+// Constantes de configuração de puxador para portas deslizantes
+const CONFIG_PUXADOR_DESLIZANTE = {
+  cotaInferiorPadrao: 1000, // mm da base da porta
+  posicaoPadrao: 'vertical',
+  ladoPadrao: 'esquerdo'
+};
+
+/**
+ * Verifica se a função da porta é deslizante
+ * @param {string} funcao - Função da porta
+ * @returns {boolean} - True se for porta deslizante
+ */
+function ehPortaDeslizante(funcao) {
+  if (!funcao) return false;
+  
+  // Normalizar texto para comparação (remover espaços, underscores e converter para minúsculo)
+  const funcaoNormalizada = funcao.toLowerCase().replace(/[\s_]/g, '');
+  
+  // Verificar variações de porta deslizante
+  return funcaoNormalizada === 'deslizante' || 
+         funcaoNormalizada.includes('deslizante') || 
+         funcaoNormalizada.includes('correr');
+}
+
+/**
+ * Verifica se a função da porta é basculante
+ * @param {string} funcao - Função da porta
+ * @returns {boolean} - True se for porta basculante
+ */
+function ehPortaBasculante(funcao) {
+  if (!funcao) return false;
+  
+  // Normalizar texto para comparação
+  const funcaoNormalizada = funcao.toLowerCase().replace(/[\s_]/g, '');
+  
+  return funcaoNormalizada === 'basculante' || 
+         funcaoNormalizada.includes('basculante');
+}
+
+/**
+ * Verifica se a função da porta é de giro (todas as variações)
+ * @param {string} funcao - Função da porta
+ * @returns {boolean} - True se for porta de giro
+ */
+function ehPortaGiro(funcao) {
+  if (!funcao) return false;
+  
+  // Normalizar texto para comparação
+  const funcaoNormalizada = funcao.toLowerCase().replace(/[\s_]/g, '');
+  
+  console.log('[DEBUG ehPortaGiro] Testando função:', funcao, '→ Normalizada:', funcaoNormalizada);
+  
+  // Lista de todas as variações de portas de giro
+  const varicoesGiro = [
+    'giro',
+    'abrirsuperior', 'abrirsuperiordir', 'abrirsuperiordireta',
+    'abrirsuperiorsa', 'abrirsuperioresa', 'abrirsuperioresa',
+    'abririnferior', 'abririnferiordir', 'abririnferiordireta', 
+    'abririnferiorsa', 'abririnferioresa',
+    'superior', 'superiordir', 'superiordireta', 'superioresquerda',
+    'inferior', 'inferiordir', 'inferiordireta', 'inferioresquerda',
+    'direita', 'esquerda'
+  ];
+  
+  const resultado = funcaoNormalizada === 'giro' || 
+         funcaoNormalizada.includes('giro') ||
+         funcaoNormalizada.includes('abrir') ||
+         varicoesGiro.some(variacao => funcaoNormalizada.includes(variacao));
+  
+  console.log('[DEBUG ehPortaGiro] Resultado:', resultado);
+  
+  return resultado;
+}
+
+/**
+ * Recalcular cotas do puxador para manter centralização ao redimensionar
+ * @param {number} alturaPorta - Nova altura da porta em mm
+ * @param {number} medidaPuxador - Medida do puxador em mm
+ * @param {string} tipoPorta - Tipo da porta ('deslizante', 'giro', etc.)
+ * @returns {object} - Objeto com cotas recalculadas
+ */
+function recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, tipoPorta = 'giro') {
+  // Calcular posição central do puxador
+  const espacoDisponivel = alturaPorta - medidaPuxador;
+  const centroVertical = espacoDisponivel / 2;
+  
+  // Para manter o puxador centralizado
+  const cotaSuperiorCentralizada = centroVertical;
+  const cotaInferiorCentralizada = centroVertical;
+  
+  console.log('[DEBUG] Recalculando cotas para centralizar:', {
+    alturaPorta,
+    medidaPuxador,
+    espacoDisponivel,
+    cotaSuperiorCentralizada,
+    cotaInferiorCentralizada
+  });
+  
+  return {
+    cotaSuperior: Math.max(0, Math.round(cotaSuperiorCentralizada)),
+    cotaInferior: Math.max(0, Math.round(cotaInferiorCentralizada)),
+    posicao: 'vertical'
+  };
+}
+
+/**
+ * Obter configurações padrão de puxador para portas de giro
+ * @param {number} alturaPorta - Altura da porta em mm
+ * @param {number} medidaPuxador - Medida do puxador em mm
+ * @param {string} funcao - Função específica da porta (superior/inferior)
+ * @returns {object} - Objeto com cotas padrão
+ */
+function obterCotasPadraoParaGiro(alturaPorta = 2450, medidaPuxador = 150, funcao = '') {
+  // Para portas de giro, usar centralização automática
+  return recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, 'giro');
+}
+
+/**
+ * Obter configurações padrão de puxador para porta deslizante
+ * @param {number} alturaPorta - Altura da porta em mm
+ * @param {number} medidaPuxador - Medida do puxador em mm
+ * @returns {object} - Objeto com cotas padrão
+ */
+function obterCotasPadraoParaDeslizante(alturaPorta = 2100, medidaPuxador = 100) {
+  // Para portas deslizantes, também usar centralização automática
+  return recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, 'deslizante');
+}
+
+/**
+ * Validar se as dimensões do puxador cabem na porta
+ * @param {number} alturaPorta - Altura da porta em mm
+ * @param {number} cotaSuperior - Cota superior em mm
+ * @param {number} cotaInferior - Cota inferior em mm
+ * @param {number} medidaPuxador - Medida do puxador em mm
+ * @returns {object} - Resultado da validação com isValid e mensagem
+ */
+function validarDimensoesPuxador(alturaPorta, cotaSuperior, cotaInferior, medidaPuxador) {
+  const espacoOcupado = cotaSuperior + medidaPuxador + cotaInferior;
+  
+  if (espacoOcupado > alturaPorta) {
+    return {
+      isValid: false,
+      mensagem: `Puxador não cabe na porta. Espaço necessário: ${espacoOcupado}mm, altura disponível: ${alturaPorta}mm`
+    };
+  }
+  
+  // Verificar se as cotas são válidas (não negativas)
+  if (cotaSuperior < 0 || cotaInferior < 0) {
+    return {
+      isValid: false,
+      mensagem: 'Cotas do puxador não podem ser negativas'
+    };
+  }
+  
+  return {
+    isValid: true,
+    mensagem: 'Dimensões válidas'
+  };
+}
+
 /**
  * Atualiza o título baseado no parceiro selecionado
  */
@@ -346,7 +516,13 @@ export {
   eImagem,
   debounce,
   copiarParaAreaDeTransferencia,
-  formatarTitulo
+  formatarTitulo,
+  ehPortaDeslizante,
+  ehPortaBasculante,
+  ehPortaGiro,
+  obterCotasPadraoParaDeslizante,
+  obterCotasPadraoParaGiro,
+  validarDimensoesPuxador
 };
 
 // Exportar funções de validação para o escopo global

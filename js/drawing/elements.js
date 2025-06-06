@@ -8,6 +8,7 @@ import { criarElementoSVG, getSvgContainer } from './core.js';
 import { desenharCotaSVG } from './annotations.js';
 import { obterConfiguracaoAtual } from '../initialize.js';
 import { mmParaPixels, pixelsParaMm, pixelsParaMmInteiro, formatarValorCota } from './utils.js';
+import { ehPortaDeslizante, ehPortaGiro, obterCotasPadraoParaDeslizante, obterCotasPadraoParaGiro, validarDimensoesPuxador } from '../utils.js';
 
 /**
  * Limpa todos os elementos do container SVG
@@ -26,6 +27,9 @@ export function limparSVG() {
   
   console.log('[INFO Vibecode] SVG limpo com sucesso');
 }
+
+// Expor globalmente para acesso dos controles de UI
+window.limparSVG = limparSVG;
 
 /**
  * Desenha as dobradiças da porta
@@ -121,22 +125,96 @@ export function desenharPuxadorSVG(x, y, altura, ladoDireito = false, larguraPor
   // Verificar se o puxador deve ser desenhado em ambos os lados
   let posicaoPuxador = config.puxador?.posicao || 'vertical';
   
-  // Para portas deslizantes, sempre usar posição vertical
-  const ehDeslizante = config.funcao === 'deslizante';
+  // Detectar tipo de porta para aplicar configurações específicas
+  const ehDeslizante = ehPortaDeslizante(config.funcao);
+  const ehGiro = ehPortaGiro(config.funcao);
+  let cotaSuperior, cotaInferior;
+  
+  console.log('[DEBUG] Detectando tipo de porta:', {
+    funcao: config.funcao,
+    ehDeslizante: ehDeslizante,
+    ehGiro: ehGiro,
+    puxadorMedida: config.puxador?.medida,
+    puxadorPosicao: config.puxador?.posicao
+  });
+  
   if (ehDeslizante) {
-    posicaoPuxador = 'vertical';
+    // Obter medida do puxador para cálculo das cotas
+    const medidaPuxador = config.puxador?.medida === 'Porta Inteira' ? 
+                         altura / CONFIG.escala : // Se porta inteira, usar altura total
+                         parseInt(config.puxador?.medida, 10) || 100; // Valor padrão 100mm
     
-    // Verificar configuração de cota superior/inferior (também para portas deslizantes)
-    let cotaSuperior = parseInt(config.puxador.cotaSuperior, 10);
-    let cotaInferior = parseInt(config.puxador.cotaInferior, 10);
+    // Usar configuração centralizada para portas deslizantes
+    const cotasPadrao = obterCotasPadraoParaDeslizante(altura / CONFIG.escala, medidaPuxador);
+    posicaoPuxador = cotasPadrao.posicao;
     
-    // Usar valores padrão se não estiverem definidos
-    if (isNaN(cotaSuperior) || cotaSuperior < 0) {
-      cotaSuperior = 950; // valor padrão
+    // Usar valores do config se válidos, senão usar padrão calculado
+    const cotaSuperiorConfig = parseInt(config.puxador.cotaSuperior, 10);
+    const cotaInferiorConfig = parseInt(config.puxador.cotaInferior, 10);
+    
+    // Priorizar valores do formulário quando válidos (incluindo zero)
+    cotaSuperior = (!isNaN(cotaSuperiorConfig) && cotaSuperiorConfig >= 0) ? 
+                   cotaSuperiorConfig : cotasPadrao.cotaSuperior;
+    
+    cotaInferior = (!isNaN(cotaInferiorConfig) && cotaInferiorConfig >= 0) ? 
+                   cotaInferiorConfig : cotasPadrao.cotaInferior;
+    
+    console.log('[DEBUG] Porta deslizante - Cotas do config:', {
+      cotaSuperiorConfig, cotaInferiorConfig, 
+      cotaSuperior, cotaInferior, 
+      cotasPadrao
+    });
+    
+    // Validar se as dimensões cabem na porta
+    const validacao = validarDimensoesPuxador(altura / CONFIG.escala, cotaSuperior, cotaInferior, medidaPuxador);
+    if (!validacao.isValid) {
+      console.warn('[VALIDAÇÃO] Problema com dimensões do puxador:', validacao.mensagem);
+      console.warn('[VALIDAÇÃO] Valores que falharam:', { cotaSuperior, cotaInferior, medidaPuxador, altura: altura/CONFIG.escala });
+      console.warn('[VALIDAÇÃO] Sobrescrevendo com padrões:', cotasPadrao);
+      // Usar valores padrão seguros em caso de erro
+      cotaSuperior = cotasPadrao.cotaSuperior;
+      cotaInferior = cotasPadrao.cotaInferior;
+    } else {
+      console.log('[VALIDAÇÃO] Dimensões do puxador válidas:', { cotaSuperior, cotaInferior, medidaPuxador });
     }
+  } else if (ehGiro) {
+    // Configuração específica para portas de giro
+    const medidaPuxador = config.puxador?.medida === 'Porta Inteira' ? 
+                         altura / CONFIG.escala : // Se porta inteira, usar altura total
+                         parseInt(config.puxador?.medida, 10) || 150; // Valor padrão 150mm
     
-    if (isNaN(cotaInferior) || cotaInferior < 0) {
-      cotaInferior = 1000; // valor padrão
+    // Usar configuração centralizada para portas de giro
+    const cotasPadrao = obterCotasPadraoParaGiro(altura / CONFIG.escala, medidaPuxador, config.funcao);
+    posicaoPuxador = cotasPadrao.posicao;
+    
+    // Usar valores do config se válidos, senão usar padrão calculado
+    const cotaSuperiorConfig = parseInt(config.puxador.cotaSuperior, 10);
+    const cotaInferiorConfig = parseInt(config.puxador.cotaInferior, 10);
+    
+    // Priorizar valores do formulário quando válidos (incluindo zero)
+    cotaSuperior = (!isNaN(cotaSuperiorConfig) && cotaSuperiorConfig >= 0) ? 
+                   cotaSuperiorConfig : cotasPadrao.cotaSuperior;
+    
+    cotaInferior = (!isNaN(cotaInferiorConfig) && cotaInferiorConfig >= 0) ? 
+                   cotaInferiorConfig : cotasPadrao.cotaInferior;
+    
+    console.log('[DEBUG] Porta de giro - Cotas do config:', {
+      cotaSuperiorConfig, cotaInferiorConfig, 
+      cotaSuperior, cotaInferior, 
+      cotasPadrao
+    });
+    
+    // Validar se as dimensões cabem na porta
+    const validacao = validarDimensoesPuxador(altura / CONFIG.escala, cotaSuperior, cotaInferior, medidaPuxador);
+    if (!validacao.isValid) {
+      console.warn('[VALIDAÇÃO] Problema com dimensões do puxador de giro:', validacao.mensagem);
+      console.warn('[VALIDAÇÃO] Valores que falharam:', { cotaSuperior, cotaInferior, medidaPuxador, altura: altura/CONFIG.escala });
+      console.warn('[VALIDAÇÃO] Sobrescrevendo com padrões:', cotasPadrao);
+      // Usar valores padrão seguros em caso de erro
+      cotaSuperior = cotasPadrao.cotaSuperior;
+      cotaInferior = cotasPadrao.cotaInferior;
+    } else {
+      console.log('[VALIDAÇÃO] Dimensões do puxador de giro válidas:', { cotaSuperior, cotaInferior, medidaPuxador });
     }
   }
   
@@ -271,21 +349,69 @@ export function desenharPuxadorSVG(x, y, altura, ladoDireito = false, larguraPor
     // Posição Y do puxador
     let posY;
     
-    // Verificar configuração de cota superior/inferior
-    let cotaSuperior = parseInt(config.puxador.cotaSuperior, 10);
-    let cotaInferior = parseInt(config.puxador.cotaInferior, 10);
-    
-    // Usar valores padrão se não estiverem definidos
-    if (isNaN(cotaSuperior) || cotaSuperior < 0) {
-      cotaSuperior = 950; // valor padrão
+    // As cotas já foram calculadas no início da função para portas deslizantes e de giro
+    // Para outras portas (basculante, etc.), verificar configuração de cota superior/inferior
+    if (!ehDeslizante && !ehGiro) {
+      cotaSuperior = parseInt(config.puxador.cotaSuperior, 10);
+      cotaInferior = parseInt(config.puxador.cotaInferior, 10);
+      
+      // Usar valores padrão se não estiverem definidos
+      if (isNaN(cotaSuperior) || cotaSuperior < 0) {
+        cotaSuperior = 950; // valor padrão
+      }
+      
+      if (isNaN(cotaInferior) || cotaInferior < 0) {
+        cotaInferior = 1000; // valor padrão
+      }
     }
     
-    if (isNaN(cotaInferior) || cotaInferior < 0) {
-      cotaInferior = 1000; // valor padrão
+    // Calcular posição Y com base nas cotas e tipo de porta
+    if (ehDeslizante) {
+      // Para portas deslizantes, posicionar baseado na cota inferior
+      posY = y + altura - (cotaInferior * CONFIG.escala) - alturaPuxador;
+      console.log('[DEBUG] Porta deslizante - PosY calculado pela cota inferior:', posY, 'CotaInferior:', cotaInferior, 'Altura:', altura/CONFIG.escala);
+    } else if (ehGiro) {
+      // Para portas de giro, usar sistema de prioridade dinâmica
+      // Calcular duas posições possíveis e escolher a que faz mais sentido
+      
+      const posYByCotaSuperior = y + (cotaSuperior * CONFIG.escala);
+      const posYByCotaInferior = y + altura - (cotaInferior * CONFIG.escala) - alturaPuxador;
+      
+      // Verificar se ambas as cotas produzem posições válidas
+      const superiorValida = posYByCotaSuperior >= y && (posYByCotaSuperior + alturaPuxador) <= (y + altura);
+      const inferiorValida = posYByCotaInferior >= y && (posYByCotaInferior + alturaPuxador) <= (y + altura);
+      
+      // Calcular qual das cotas resulta na posição mais próxima dos valores padrão
+      const cotaSuperiorConfig = parseInt(config.puxador.cotaSuperior, 10);
+      const cotaInferiorConfig = parseInt(config.puxador.cotaInferior, 10);
+      
+      // Se apenas uma posição é válida, usar ela
+      if (superiorValida && !inferiorValida) {
+        posY = posYByCotaSuperior;
+        console.log('[DEBUG] Porta de giro - PosY pela cota superior (única válida):', posY, 'CotaSuperior:', cotaSuperior);
+      } else if (!superiorValida && inferiorValida) {
+        posY = posYByCotaInferior;
+        console.log('[DEBUG] Porta de giro - PosY pela cota inferior (única válida):', posY, 'CotaInferior:', cotaInferior);
+      } else {
+        // Se ambas são válidas, priorizar a cota que foi definida pelo usuário (não é padrão)
+        const cotaSuperiorEhPadrao = isNaN(cotaSuperiorConfig) || cotaSuperiorConfig === 950;
+        const cotaInferiorEhPadrao = isNaN(cotaInferiorConfig) || cotaInferiorConfig === 1000;
+        
+        if (!cotaInferiorEhPadrao) {
+          // Usuário definiu cota inferior, usar ela
+          posY = posYByCotaInferior;
+          console.log('[DEBUG] Porta de giro - PosY pela cota inferior (definida pelo usuário):', posY, 'CotaInferior:', cotaInferior);
+        } else {
+          // Usar cota superior (padrão ou definida pelo usuário)
+          posY = posYByCotaSuperior;
+          console.log('[DEBUG] Porta de giro - PosY pela cota superior (padrão):', posY, 'CotaSuperior:', cotaSuperior);
+        }
+      }
+    } else {
+      // Para outras portas (basculante, etc.), usar cota superior por padrão
+      posY = y + (cotaSuperior * CONFIG.escala);
+      console.log('[DEBUG] Porta padrão - PosY calculado pela cota superior:', posY, 'CotaSuperior:', cotaSuperior);
     }
-    
-    // Calcular posição Y com base na cota superior
-    posY = y + (cotaSuperior * CONFIG.escala);
     
     // Garantir que o puxador não ultrapasse os limites da porta
     if (posY < y) {
@@ -339,6 +465,8 @@ export function desenharPuxadorSVG(x, y, altura, ladoDireito = false, larguraPor
     svgContainer.appendChild(brilho);
     
     // Desenhar cotas
+    console.log('[DEBUG] Desenhando cotas - Superior:', cotaSuperior, 'Inferior:', cotaInferior, 'PosY:', posY);
+    
     if (cotaSuperior > 0) {
       // Cota do topo ao puxador
       desenharCotaSVG(
@@ -350,6 +478,7 @@ export function desenharPuxadorSVG(x, y, altura, ladoDireito = false, larguraPor
         'middle',
         CONFIG.corCotaPuxador
       );
+      console.log('[DEBUG] Cota superior desenhada:', cotaSuperior);
     }
     
     // Cota da base da porta ao puxador (só desenhar se não for zero)
@@ -363,6 +492,7 @@ export function desenharPuxadorSVG(x, y, altura, ladoDireito = false, larguraPor
         'middle',
         CONFIG.corCotaPuxador
       );
+      console.log('[DEBUG] Cota inferior desenhada:', cotaInferior);
     }
     
     // Cota do comprimento do puxador (só desenhar se não for zero)

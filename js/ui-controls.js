@@ -6,6 +6,7 @@ import { mostrarNotificacao } from './notifications.js';
 import { obterConfiguracaoAtual, atualizarConfiguracao } from './initialize.js';
 import { desenharPorta, atualizarDesenho } from './drawing.js';
 import { salvarLogoNoStorage } from './storage.js';
+import { ehPortaDeslizante, ehPortaGiro, obterCotasPadraoParaDeslizante, obterCotasPadraoParaGiro, validarDimensoesPuxador } from './utils.js';
 
 /**
  * Inicializa os controles do formulário
@@ -265,12 +266,7 @@ function handleLarguraChange() {
       window.atualizarCamposPosicoesDobradicasQtd(numDobradicasGiro, posicoes);
     }
     
-    // Recalcular posições do puxador quando a largura muda
-    // Esta linha foi adicionada para garantir reconfiguração do puxador
-    if (larguraAntiga !== largura && typeof window.recalcularPosicoesPuxador === 'function') {
-      const alturaPorta = configAtual.altura || 2450;
-      window.recalcularPosicoesPuxador(alturaPorta, alturaPorta);
-    }
+    // Redesenho completo garantirá que todas as coordenadas sejam recalculadas
     
     // Forçar redesenho
     if (typeof window.desenharPorta === 'function') {
@@ -304,9 +300,26 @@ function handleLarguraKeydown(event) {
     const valor = parseInt(input.value);
     if (!isNaN(valor)) {
       const configAtual = obterConfiguracaoAtual();
-      configAtual.largura = valor;
-      atualizarConfiguracao(configAtual);
-      desenharPorta(configAtual, true);
+      const larguraAntiga = configAtual.largura;
+      
+      if (larguraAntiga !== valor) {
+        configAtual.largura = valor;
+        atualizarConfiguracao(configAtual);
+        
+        // FORÇAR REDESENHO COMPLETO
+        if (typeof window.limparSVG === 'function') {
+          window.limparSVG();
+        }
+        
+        setTimeout(() => {
+          const configNova = obterConfiguracaoAtual();
+          if (typeof window.desenharPorta === 'function') {
+            window.desenharPorta(configNova, true);
+          } else if (typeof window.atualizarDesenho === 'function') {
+            window.atualizarDesenho(configNova);
+          }
+        }, 10);
+      }
     }
     event.preventDefault();
   }
@@ -401,10 +414,7 @@ function handleAlturaChange() {
     }
   }
   
-  // Recalcular posições do puxador quando a altura muda
-  if (typeof window.recalcularPosicoesPuxador === 'function') {
-    window.recalcularPosicoesPuxador(alturaAntiga, altura);
-  }
+  // Redesenho completo garantirá que todas as coordenadas sejam recalculadas
   
   // Redesenhar a porta
   if (typeof window.desenharPorta === 'function') {
@@ -439,15 +449,25 @@ function handleAlturaKeydown(event) {
     if (!isNaN(valor)) {
       const configAtual = obterConfiguracaoAtual();
       const alturaAntiga = configAtual.altura;
-      configAtual.altura = valor;
-      atualizarConfiguracao(configAtual);
       
-      // Recalcular posições do puxador quando a altura muda
       if (alturaAntiga !== valor) {
-        recalcularPosicoesPuxador(alturaAntiga, valor);
+        configAtual.altura = valor;
+        atualizarConfiguracao(configAtual);
+        
+        // FORÇAR REDESENHO COMPLETO
+        if (typeof window.limparSVG === 'function') {
+          window.limparSVG();
+        }
+        
+        setTimeout(() => {
+          const configNova = obterConfiguracaoAtual();
+          if (typeof window.desenharPorta === 'function') {
+            window.desenharPorta(configNova, true);
+          } else if (typeof window.atualizarDesenho === 'function') {
+            window.atualizarDesenho(configNova);
+          }
+        }, 10);
       }
-      
-      desenharPorta(obterConfiguracaoAtual(), true);
     }
     event.preventDefault();
   }
@@ -632,12 +652,7 @@ function inicializarControlesFuncao() {
         atualizarConfiguracao({ funcao: novaFuncao });
       }
       
-      // Recalcular posições do puxador sempre que o tipo de porta mudar
-      if (funcaoAntiga !== novaFuncao && typeof window.recalcularPosicoesPuxador === 'function') {
-        const configAtualizado = obterConfiguracaoAtual();
-        const alturaAtual = configAtualizado.altura || 2450;
-        window.recalcularPosicoesPuxador(alturaAtual, alturaAtual);
-      }
+      // Redesenho completo garantirá que todas as coordenadas sejam recalculadas
       
       toggleFuncaoPorta(novaFuncao);
       const configAtual = obterConfiguracaoAtual();
@@ -1110,9 +1125,9 @@ function inicializarControlesPuxador() {
       const puxadorPosicaoDiv = document.getElementById('puxadorPosicaoDiv');
       if (puxadorModeloSelect && puxadorPosicaoDiv) {
         const modelo = puxadorModeloSelect.value.trim().toLowerCase();
-        let funcao = funcaoPorta.value.toLowerCase().replace(/\s|_/g, '');
-        const ehDeslizante = funcao.includes('deslizante') || funcao.includes('correr');
-        const ehBasculante = funcao.includes('basculante');
+        const funcao = funcaoPorta.value;
+        const ehDeslizante = ehPortaDeslizante(funcao);
+        const ehBasculante = ehPortaBasculante(funcao);
         if (modelo === '100 puxador' || modelo === 's/puxador' || modelo === 's/ puxador' || ehDeslizante || ehBasculante) {
           puxadorPosicaoDiv.style.display = 'none';
         } else {
@@ -1649,148 +1664,51 @@ function validarLargura() {
     }
   }
   
-  // Sempre atualize a configuração e redesenhe, mesmo que o valor esteja dentro dos limites
+  // CORREÇÃO PRINCIPAL: Sempre força redesenho completo
   const configAtual = obterConfiguracaoAtual();
-  configAtual.largura = valor;
-  atualizarConfiguracao(configAtual);
-  desenharPorta(configAtual, true);
+  const larguraAntiga = configAtual.largura;
+  
+  if (larguraAntiga !== valor) {
+    // Atualizar configuração
+    configAtual.largura = valor;
+    atualizarConfiguracao(configAtual);
+    
+    // FORÇAR REDESENHO COMPLETO - esta é a chave da correção
+    // Limpar SVG primeiro para garantir que não há elementos antigos
+    if (typeof window.limparSVG === 'function') {
+      window.limparSVG();
+    }
+    
+    // Redesenhar porta com nova configuração
+    setTimeout(() => {
+      const configNova = obterConfiguracaoAtual();
+      if (typeof window.desenharPorta === 'function') {
+        window.desenharPorta(configNova, true);
+      } else if (typeof window.atualizarDesenho === 'function') {
+        window.atualizarDesenho(configNova);
+      }
+    }, 10);
+  } else {
+    // Mesmo se não houve mudança, garantir que o desenho está correto
+    desenharPorta(configAtual, true);
+  }
 }
 
 /**
  * Recalcula as posições do puxador quando a altura ou largura da porta muda
  * @param {number} alturaAntiga - Altura anterior da porta em mm
  * @param {number} alturaNova - Nova altura da porta em mm
+ * @param {number} larguraAntiga - Largura anterior da porta em mm (opcional)
+ * @param {number} larguraNova - Nova largura da porta em mm (opcional)
  */
-function recalcularPosicoesPuxador(alturaAntiga, alturaNova) {
-  const config = obterConfiguracaoAtual();
-  
-  // Verificar se o puxador está configurado
-  if (!config.puxador) {
-    return;
-  }
-  
-  // Modelo sem puxador, não fazer nada
-  if (config.puxador.modelo === 'S/Puxador') {
-    return;
-  }
-  
-  // Verificar o tipo de porta
-  const tipoPorta = config.funcao || 'superiorDireita';
-  const ehBasculante = tipoPorta === 'basculante';
-  const ehDeslizante = tipoPorta === 'deslizante';
-  const ehGiro = ['superiorDireita', 'superiorEsquerda', 'inferiorDireita', 'inferiorEsquerda'].includes(tipoPorta);
-  
-  // Verificar a posição do puxador (vertical ou horizontal)
-  const posicaoPuxador = config.puxador.posicao || 'vertical';
-  
-  // Se for "Tamanho da Porta", não precisamos ajustar as cotas
-  if (config.puxador.medida === 'Tamanho da Porta' || config.puxador.medida === 'Porta Inteira') {
-    return;
-  }
-  
-  const medidaPuxador = parseInt(config.puxador.medida, 10);
-  if (isNaN(medidaPuxador)) {
-    return;
-  }
-  
-  // Calcular as novas cotas com base no tipo de porta e posição do puxador
-  let cotaSuperior, cotaInferior, cotaEsquerda, cotaDireita;
-  
-  if (ehBasculante) {
-    // Para porta basculante, o puxador é sempre horizontal
-    // e posicionado na parte inferior centralizado
-    const larguraPorta = config.largura || 800;
-    cotaEsquerda = Math.max(0, Math.round((larguraPorta - medidaPuxador) / 2));
-    cotaDireita = Math.max(0, larguraPorta - (cotaEsquerda + medidaPuxador));
-    
-    // Para basculante, a posição vertical é fixa próxima da base
-    cotaSuperior = Math.max(0, Math.round(alturaNova * 0.7));
-    cotaInferior = Math.max(0, alturaNova - (cotaSuperior + 5)); // 5 é a espessura do puxador
-    
-  } else if (ehDeslizante) {
-    // Para porta deslizante, o puxador é sempre vertical
-    // e alinhado com o lado oposto às guias
-    
-    // Cota inferior fixa padrão para portas deslizantes
-    cotaInferior = 1000;
-    cotaSuperior = Math.max(0, alturaNova - (medidaPuxador + cotaInferior));
-    
-  } else if (ehGiro) {
-    // Para portas de giro, depende da orientação do puxador
-    if (posicaoPuxador === 'vertical') {
-      // Puxador vertical para portas de giro tem cota inferior padrão
-      cotaInferior = 1000; // Valor padrão fixo para cota inferior
-      cotaSuperior = Math.max(0, alturaNova - (medidaPuxador + cotaInferior));
-    } else {
-      // Puxador horizontal para portas de giro
-      const larguraPorta = config.largura || 450;
-      
-      // Centralizar horizontalmente
-      cotaEsquerda = Math.max(0, Math.round((larguraPorta - medidaPuxador) / 2));
-      cotaDireita = Math.max(0, larguraPorta - (cotaEsquerda + medidaPuxador));
-      
-      // Posicionar verticalmente com base no tipo de porta
-      const ehPortaInferior = tipoPorta.includes('inferior');
-      if (ehPortaInferior) {
-        // Para portas inferiores, o puxador fica mais próximo do topo
-        cotaSuperior = Math.max(0, Math.round(alturaNova * 0.3));
-        cotaInferior = Math.max(0, alturaNova - (cotaSuperior + 5)); // 5 é a espessura do puxador
-      } else {
-        // Para portas superiores, o puxador fica mais próximo da base
-        cotaSuperior = Math.max(0, Math.round(alturaNova * 0.7));
-        cotaInferior = Math.max(0, alturaNova - (cotaSuperior + 5)); // 5 é a espessura do puxador
-      }
-    }
-  }
-  
-  // Atualizar a configuração com as novas cotas
-  const novaConfigPuxador = { ...config.puxador };
-  
-  // Atualizar cotas verticais se calculadas
-  if (cotaSuperior !== undefined && cotaInferior !== undefined) {
-    novaConfigPuxador.cotaSuperior = cotaSuperior;
-    novaConfigPuxador.cotaInferior = cotaInferior;
-    
-    // Atualizar campos de formulário para cotas verticais
-    const puxadorCotaSuperior = document.getElementById('puxadorCotaSuperior');
-    const puxadorCotaInferior = document.getElementById('puxadorCotaInferior');
-    
-    if (puxadorCotaSuperior) {
-      puxadorCotaSuperior.value = cotaSuperior;
-    }
-    if (puxadorCotaInferior) {
-      puxadorCotaInferior.value = cotaInferior;
-    }
-  }
-  
-  // Atualizar cotas horizontais se calculadas
-  if (cotaEsquerda !== undefined && cotaDireita !== undefined) {
-    novaConfigPuxador.cotaEsquerda = cotaEsquerda;
-    novaConfigPuxador.cotaDireita = cotaDireita;
-    
-    // Atualizar campos de formulário para cotas horizontais
-    const puxadorCotaEsquerda = document.getElementById('puxadorCotaEsquerda');
-    const puxadorCotaDireita = document.getElementById('puxadorCotaDireita');
-    
-    if (puxadorCotaEsquerda) {
-      puxadorCotaEsquerda.value = cotaEsquerda;
-    }
-    if (puxadorCotaDireita) {
-      puxadorCotaDireita.value = cotaDireita;
-    }
-  }
-  
-  // Atualizar a configuração
-  atualizarConfiguracao({
-    puxador: novaConfigPuxador
-  });
-}
+// NOTA: Funções de recálculo removidas - agora usamos redesenho completo
+// Isso garante que todas as coordenadas sejam recalculadas corretamente
 
 /**
  * Valida o campo de altura
  */
 function validarAltura() {
-  const min = 200;
+  const min = 300;
   const max = 3000;
   const input = document.getElementById('alturaInput');
   
@@ -1812,9 +1730,6 @@ function validarAltura() {
     input.value = obterConfiguracaoAtual().altura;
     return;
   }
-  
-  // Obter altura antiga antes de validar e possivelmente modificar
-  const alturaAntiga = obterConfiguracaoAtual().altura;
   
   if (valor < min) {
     // Substituir alert por mostrarErroValidacao
@@ -1839,22 +1754,33 @@ function validarAltura() {
     }
   }
   
-  // Verificar se a altura realmente mudou
-  if (valor !== alturaAntiga) {
-    // Atualizar a configuração da altura
-    const configAtual = obterConfiguracaoAtual();
+  // CORREÇÃO PRINCIPAL: Sempre força redesenho completo
+  const configAtual = obterConfiguracaoAtual();
+  const alturaAntiga = configAtual.altura;
+  
+  if (alturaAntiga !== valor) {
+    // Atualizar configuração
     configAtual.altura = valor;
     atualizarConfiguracao(configAtual);
     
-    // Recalcular posições do puxador baseadas na nova altura
-    recalcularPosicoesPuxador(alturaAntiga, valor);
+    // FORÇAR REDESENHO COMPLETO - esta é a chave da correção
+    // Limpar SVG primeiro para garantir que não há elementos antigos
+    if (typeof window.limparSVG === 'function') {
+      window.limparSVG();
+    }
     
-    // Desenhar porta com a configuração atualizada
-    desenharPorta(obterConfiguracaoAtual(), true);
-  }
-  else {
-    // Se altura não mudou, apenas atualizar o desenho
-    desenharPorta(obterConfiguracaoAtual(), true);
+    // Redesenhar porta com nova configuração
+    setTimeout(() => {
+      const configNova = obterConfiguracaoAtual();
+      if (typeof window.desenharPorta === 'function') {
+        window.desenharPorta(configNova, true);
+      } else if (typeof window.atualizarDesenho === 'function') {
+        window.atualizarDesenho(configNova);
+      }
+    }, 10);
+  } else {
+    // Mesmo se não houve mudança, garantir que o desenho está correto
+    desenharPorta(configAtual, true);
   }
 }
 
@@ -2280,14 +2206,12 @@ export {
   toggleFuncaoPorta,
   desenharPorta,
   calcularPosicaoDefaultDobradica,
-  atualizarCamposPosicoesDobradicasQtd,
-  recalcularPosicoesPuxador
+  atualizarCamposPosicoesDobradicasQtd
 };
 
 // Também disponibilizar globalmente
 window.calcularPosicaoDefaultDobradica = calcularPosicaoDefaultDobradica;
-window.atualizarCamposPosicoesDobradicasQtd = atualizarCamposPosicoesDobradicasQtd;
-window.recalcularPosicoesPuxador = recalcularPosicoesPuxador; 
+window.atualizarCamposPosicoesDobradicasQtd = atualizarCamposPosicoesDobradicasQtd; 
 window.definirNumeroDobradicasBasculante = definirNumeroDobradicasBasculante; 
 
 /**

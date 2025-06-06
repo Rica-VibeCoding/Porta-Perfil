@@ -8,6 +8,7 @@ import { criarElementoSVG, getSvgContainer, aplicarFundoBranco, inicializarCanva
 import { desenharDobradicasSVG, aplicarEfeitosReflexoVidro, desenharPuxadorSVG, limparSVG } from './elements.js';
 import { desenharCotasSVG, desenharLegenda } from './annotations.js';
 import { mmParaPixels, pixelsParaMmInteiro, formatarValorCota } from './utils.js';
+import { ehPortaDeslizante } from '../utils.js';
 
 /**
  * Atualiza a tabela de especificações com os dados da configuração atual
@@ -261,14 +262,16 @@ export function desenharPortaAbrir(config) {
   // Atualizar tabela de especificações
   atualizarTabelaEspecificacoes(config);
   
+  // Atualizar especificações na UI principal também
+  if (typeof window.atualizarEspecificacoes === 'function') {
+    window.atualizarEspecificacoes(config);
+  }
+  
   // Limpar legendas antigas do SVG antes de desenhar nova
   limparLegendaExistente(config);
   
   // Renderizar a lâmina da porta (a face principal)
   desenharLaminaPorta(config);
-  
-  // Desenhar cotas
-  desenharCotasSVG(posX, posY, larguraPorta, alturaPorta, config);
   
   return true;
 }
@@ -345,6 +348,7 @@ export function desenharPortaDeslizante(config) {
   
   // Verificar se o puxador deve ser desenhado em ambos os lados
   const ladoPuxador = config.puxador?.lados || 'direito';
+  const ehDeslizante = ehPortaDeslizante(config.funcao);
   
   if (ladoPuxador === 'ambos') {
     // Configuração para puxador do lado direito
@@ -352,7 +356,8 @@ export function desenharPortaDeslizante(config) {
       ...config,
       puxador: {
         ...config.puxador,
-        posicao: 'vertical',
+        // Para portas deslizantes, sempre forçar vertical; para outras, manter config original
+        posicao: ehDeslizante ? 'vertical' : config.puxador.posicao,
         lado: 'direito'
       }
     };
@@ -362,7 +367,8 @@ export function desenharPortaDeslizante(config) {
       ...config,
       puxador: {
         ...config.puxador,
-        posicao: 'vertical',
+        // Para portas deslizantes, sempre forçar vertical; para outras, manter config original
+        posicao: ehDeslizante ? 'vertical' : config.puxador.posicao,
         lado: 'esquerdo'
       }
     };
@@ -379,13 +385,17 @@ export function desenharPortaDeslizante(config) {
       ...config,
       puxador: {
         ...config.puxador,
-        posicao: 'vertical',
+        // Para portas deslizantes, sempre forçar vertical; para outras, manter config original
+        posicao: ehDeslizante ? 'vertical' : config.puxador.posicao,
         lado: ladoPuxador
       }
     };
     
-    // O parâmetro ladoDireito agora é dinâmico baseado na configuração
-    desenharPuxadorSVG(posX, posY, alturaPorta, ladoPuxador !== 'esquerdo', larguraPorta, configuracaoPuxador);
+    // Corrigir lógica de determinação do lado:
+    // - Se ladoPuxador é 'direito', então ladoDireito = true
+    // - Se ladoPuxador é 'esquerdo', então ladoDireito = false
+    const ladoDireito = (ladoPuxador === 'direito');
+    desenharPuxadorSVG(posX, posY, alturaPorta, ladoDireito, larguraPorta, configuracaoPuxador);
   }
   
   // Desenhar cotas

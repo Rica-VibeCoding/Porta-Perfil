@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/home/ricar/.npm-global/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -A 15 -B 5 \"ehDeslizante\" \"/mnt/c/Users/ricar/Projetos/PORTAS PERFIS/js/drawing/elements.js\")",
+      "Bash(/home/ricar/.npm-global/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -A 20 -B 5 \"cotaSuperior.*cotaInferior\" \"/mnt/c/Users/ricar/Projetos/PORTAS PERFIS/js/drawing/elements.js\")",
+      "Bash(/home/ricar/.npm-global/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -A 10 -B 5 \"posicao.*vertical\" \"/mnt/c/Users/ricar/Projetos/PORTAS PERFIS/js/\")",
+      "Bash(/home/ricar/.npm-global/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -A 10 -B 5 \"deslizante.*puxador\" \"/mnt/c/Users/ricar/Projetos/PORTAS PERFIS/js/\")",
+      "Bash(npm test)",
+      "Bash(npx jest:*)",
+      "Bash(grep:*)"
+    ],
+    "deny": []
+  }
+}

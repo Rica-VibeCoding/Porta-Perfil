@@ -1,10 +1,15 @@
 /**
  * Módulo de armazenamento - Gerencia o salvamento e carregamento de configurações
+ * @module storage
  */
 import { obterConfiguracaoAtual, atualizarConfiguracao } from './initialize.js';
 import { atualizarDesenho } from './drawing.js';
 import { mostrarNotificacao } from './notifications.js';
 import { updateDobradicaInputs } from './form-handlers.js';
+
+// Versão do esquema de armazenamento - incrementar quando a estrutura mudar
+const STORAGE_VERSION = 1;
+const VERSION_KEY = 'conecta_storage_version';
 
 // Chave para armazenar configurações no localStorage
 const STORAGE_KEY = 'conecta_portas_configs';
@@ -25,10 +30,166 @@ const PADROES_INICIAIS_PORTA = {
 };
 
 /**
+ * Verifica e executa migração de dados se necessário
+ */
+function inicializarVersaoStorage() {
+  try {
+    const currentVersion = localStorage.getItem(VERSION_KEY) || 0;
+    
+    if (parseInt(currentVersion) < STORAGE_VERSION) {
+      console.log(`Migrando dados do armazenamento da versão ${currentVersion} para ${STORAGE_VERSION}`);
+      migrateStorageData(parseInt(currentVersion), STORAGE_VERSION);
+      localStorage.setItem(VERSION_KEY, STORAGE_VERSION.toString());
+    }
+  } catch (error) {
+    console.error('Erro ao verificar versão do armazenamento:', error);
+  }
+}
+
+/**
+ * Migra dados entre versões de armazenamento
+ * @param {number} fromVersion - Versão atual dos dados
+ * @param {number} toVersion - Versão alvo para migração
+ */
+function migrateStorageData(fromVersion, toVersion) {
+  // Migração da versão 0 (sem versão) para versão 1
+  if (fromVersion < 1 && toVersion >= 1) {
+    try {
+      // Migrar configurações salvas
+      const configs = obterTodasConfiguracoes();
+      const normalizedConfigs = configs.map(config => ({
+        id: config.id || Date.now().toString(),
+        nome: config.nome || 'Projeto sem nome',
+        data: config.data || new Date().toISOString(),
+        dados: normalizeConfig(config.dados || config)
+      }));
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedConfigs));
+      
+      // Migrar última configuração
+      const lastConfig = JSON.parse(localStorage.getItem(LAST_CONFIG_KEY) || '{}');
+      if (lastConfig && Object.keys(lastConfig).length > 0) {
+        const normalizedLastConfig = {
+          id: lastConfig.id || Date.now().toString(),
+          nome: lastConfig.nome || 'Último projeto',
+          data: lastConfig.data || new Date().toISOString(),
+          dados: normalizeConfig(lastConfig.dados || lastConfig)
+        };
+        
+        localStorage.setItem(LAST_CONFIG_KEY, JSON.stringify(normalizedLastConfig));
+      }
+      
+      console.log('Migração para versão 1 concluída com sucesso');
+    } catch (error) {
+      console.error('Erro durante migração para versão 1:', error);
+    }
+  }
+  
+  // Adicionar mais migrações aqui quando novas versões forem criadas
+}
+
+/**
+ * Normaliza uma configuração para o formato padrão
+ * @param {Object} config - Configuração a normalizar
+ * @returns {Object} Configuração normalizada
+ */
+function normalizeConfig(config) {
+  if (!config) return null;
+  
+  // Criar estrutura padronizada
+  const normalized = {
+    // Dados básicos
+    largura: getNestedValue(config, 'largura', 450),
+    altura: getNestedValue(config, 'altura', 2450),
+    funcao: getNestedValue(config, 'funcao', 'superiorDireita'),
+    
+    // Vidro e perfil
+    vidroTipo: getNestedValue(config, 'vidroTipo', 'Incolor') || getNestedValue(config, 'vidro', 'Incolor'),
+    perfilModelo: getNestedValue(config, 'perfilModelo', 'RM-114'),
+    perfilCor: getNestedValue(config, 'perfilCor', 'Preto'),
+    
+    // Informações do cliente
+    parceiro: getNestedValue(config, 'parceiro', ''),
+    cliente: getNestedValue(config, 'cliente', ''),
+    ambiente: getNestedValue(config, 'ambiente', ''),
+    
+    // Outros campos
+    quantidade: getNestedValue(config, 'quantidade', 1),
+    numDobradicas: getNestedValue(config, 'numDobradicas', 4),
+    observacao: getNestedValue(config, 'observacao', '') || getNestedValue(config, 'descricao', ''),
+    
+    // Puxador
+    puxador: {
+      modelo: getNestedPuxadorValue(config, 'modelo', 'Cielo'),
+      medida: getNestedPuxadorValue(config, 'medida', '150'),
+      posicao: getNestedPuxadorValue(config, 'posicao', 'vertical'),
+      cotaSuperior: getNestedPuxadorValue(config, 'cotaSuperior', 950),
+      cotaInferior: getNestedPuxadorValue(config, 'cotaInferior', 1000),
+      deslocamento: getNestedPuxadorValue(config, 'deslocamento', 50),
+      lados: getNestedPuxadorValue(config, 'lados', 'esquerdo')
+    }
+  };
+  
+  return normalized;
+}
+
+/**
+ * Extrai um valor aninhado de um objeto config, considerando diferentes caminhos possíveis
+ * @param {Object} config - Objeto de configuração
+ * @param {string} key - Chave a buscar
+ * @param {*} defaultValue - Valor padrão se não encontrado
+ */
+function getNestedValue(config, key, defaultValue) {
+  if (!config) return defaultValue;
+  
+  // Verificar diretamente no objeto
+  if (config[key] !== undefined) return config[key];
+  
+  // Verificar em config.dados
+  if (config.dados && config.dados[key] !== undefined) return config.dados[key];
+  
+  // Verificar em config.dados.dados
+  if (config.dados && config.dados.dados && config.dados.dados[key] !== undefined) {
+    return config.dados.dados[key];
+  }
+  
+  return defaultValue;
+}
+
+/**
+ * Extrai um valor aninhado específico para o puxador
+ * @param {Object} config - Objeto de configuração
+ * @param {string} key - Chave a buscar
+ * @param {*} defaultValue - Valor padrão se não encontrado
+ */
+function getNestedPuxadorValue(config, key, defaultValue) {
+  if (!config) return defaultValue;
+  
+  // Verificar em config.puxador
+  if (config.puxador && config.puxador[key] !== undefined) return config.puxador[key];
+  
+  // Verificar em config.dados.puxador
+  if (config.dados && config.dados.puxador && config.dados.puxador[key] !== undefined) {
+    return config.dados.puxador[key];
+  }
+  
+  // Verificar em config.dados.dados.puxador
+  if (config.dados && config.dados.dados && config.dados.dados.puxador && 
+      config.dados.dados.puxador[key] !== undefined) {
+    return config.dados.dados.puxador[key];
+  }
+  
+  return defaultValue;
+}
+
+/**
  * Inicializa o sistema de armazenamento
  * @param {boolean} [carregarUltima=true] - Se verdadeiro, carrega a última configuração usada
  */
 function inicializarArmazenamento(carregarUltima = true) {
+  // Inicializar sistema de versionamento e migração
+  inicializarVersaoStorage();
+  
   // Carregar configurações salvas no modal
   carregarConfiguracoesNoModal();
     
@@ -268,11 +429,15 @@ function salvarConfiguracaoAtual() {
  */
 function salvarConfiguracao(config) {
   try {
+    // Normalizar os dados para garantir formato consistente
+    const dadosNormalizados = normalizeConfig(config);
+    
     // Preparar dados para salvar
     const configuracao = {
       id: Date.now().toString(),
+      nome: config.nome || 'Projeto sem nome',
       data: new Date().toISOString(),
-      dados: config
+      dados: dadosNormalizados
     };
 
     // Obter configurações existentes
@@ -281,8 +446,32 @@ function salvarConfiguracao(config) {
     // Adicionar nova configuração
     configs.push(configuracao);
         
-    // Salvar no localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(configs));
+    // Salvar no localStorage com tratamento de erros de tamanho
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(configs));
+    } catch (storageError) {
+      // Verificar se é erro de quota excedida
+      if (isQuotaExceeded(storageError)) {
+        console.warn('Limite de armazenamento excedido, removendo configurações mais antigas');
+        
+        // Remover configurações mais antigas para liberar espaço
+        if (configs.length > 1) {
+          // Ordenar por data e manter apenas metade das configurações mais recentes
+          configs.sort((a, b) => new Date(b.data) - new Date(a.data));
+          const novoTamanho = Math.max(1, Math.floor(configs.length / 2));
+          const configsReduzidas = configs.slice(0, novoTamanho);
+          
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(configsReduzidas));
+          console.log(`Armazenamento reduzido para ${novoTamanho} configurações`);
+        } else {
+          console.error('Não é possível reduzir mais o armazenamento');
+          throw storageError;
+        }
+      } else {
+        // Outro tipo de erro
+        throw storageError;
+      }
+    }
         
     // Salvar também como última configuração usada
     localStorage.setItem(LAST_CONFIG_KEY, JSON.stringify(configuracao));
@@ -294,6 +483,32 @@ function salvarConfiguracao(config) {
     mostrarNotificacao('Erro ao salvar configuração.', 'erro');
     return false;
   }
+}
+
+/**
+ * Verifica se um erro é devido a quota excedida de armazenamento
+ * @param {Error} e - O erro capturado
+ * @returns {boolean} - true se for erro de quota excedida
+ */
+function isQuotaExceeded(e) {
+  let quotaExceeded = false;
+  
+  if (e) {
+    if (e.code) {
+      switch (e.code) {
+        case 22: // Chrome
+        case 1014: // Firefox
+          // O Storage está cheio
+          quotaExceeded = true;
+          break;
+      }
+    } else if (e.name === 'QuotaExceededError' || 
+               e.name === 'NS_ERROR_DOM_QUOTA_REACHED') { // Firefox
+      quotaExceeded = true;
+    }
+  }
+  
+  return quotaExceeded;
 }
 
 /**

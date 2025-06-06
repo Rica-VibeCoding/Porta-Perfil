@@ -5,8 +5,9 @@
  * Para desativá-lo, basta remover a inclusão do script no index.html.
  */
 
-// Mapeamento dos tipos de porta para suas dimensões padrão usando formato padrão do sistema
-const PADROES_DIMENSAO_PORTA = {
+// Usar constantes centralizadas do utils.js
+// Se DIMENSOES_PADRAO_PORTAS não estiver disponível, usar fallback local
+const PADROES_DIMENSAO_PORTA = window.DIMENSOES_PADRAO_PORTAS || {
   'Abrir Superior Direita': { largura: 450, altura: 2450, quantidade: 1 },
   'Abrir Superior Esquerda': { largura: 450, altura: 2450, quantidade: 1 },
   'Abrir Inferior Direita': { largura: 450, altura: 2450, quantidade: 1 },

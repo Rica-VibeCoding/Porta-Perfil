@@ -170,6 +170,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.desenharPorta = desenharPorta;
     window.inicializarCanvas = inicializarCanvas;
     window.atualizarDesenho = atualizarDesenho;
+    window.atualizarEspecificacoes = atualizarEspecificacoes;
     
     // Exportar funções úteis para o escopo global (para debugging)
     window.inicializarAplicacao = inicializarAplicacao;
@@ -239,6 +240,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Garantir que o botão de cadastramento esteja visível para todos os usuários
       btnCadastramento.style.display = 'block';
     }
+    
+
     
     console.log('Aplicação inicializada com sucesso');
     mostrarNotificacao('Sistema inicializado', 'success');
@@ -478,62 +481,72 @@ function garantirMedidaPuxador() {
   }
 }
 
-// Adicionar função para atualizar especificações
 /**
- * Atualiza a tabela de especificações técnicas com os dados atuais
+ * Atualiza as especificações da porta na tabela
  * @param {Object} config - Configuração atual da porta
  */
 function atualizarEspecificacoes(config) {
   if (!config) return;
   
-  // Atualizar células da tabela com os dados da configuração
+  // Atualizar célula de dimensões
   const dimensoes = document.getElementById('specs-dimensoes');
-  if (dimensoes) dimensoes.textContent = `${config.largura || '-'} × ${config.altura || '-'} mm`;
+  if (dimensoes) {
+    dimensoes.textContent = `${config.largura || '-'} × ${config.altura || '-'} mm`;
+  }
   
+  // Atualizar célula de vidro
   const vidro = document.getElementById('specs-vidro');
-  if (vidro) vidro.textContent = config.vidro?.tipo || '-';
+  if (vidro) {
+    vidro.textContent = config.vidroTipo || config.vidro || '-';
+  }
   
+  // Atualizar célula de perfil
   const perfil = document.getElementById('specs-perfil');
-  if (perfil) perfil.textContent = `${config.perfil?.modelo || '-'} (${config.perfil?.cor || '-'})`;
+  if (perfil) {
+    perfil.textContent = `${config.perfilModelo || '-'} (${config.perfilCor || '-'})`;
+  }
   
+  // Atualizar célula de função
   const funcao = document.getElementById('specs-funcao');
   if (funcao) {
     let funcaoTexto = '-';
     if (config.funcao) {
-      if (config.funcao === 'deslizante') {
-        funcaoTexto = 'Deslizante';
-      } else if (config.funcao.includes('superior')) {
-        funcaoTexto = config.funcao.includes('Direita') ? 'Superior Direita' : 'Superior Esquerda';
-      } else if (config.funcao.includes('inferior')) {
-        funcaoTexto = config.funcao.includes('Direita') ? 'Inferior Direita' : 'Inferior Esquerda';
+      switch (config.funcao) {
+        case 'deslizante':
+          funcaoTexto = 'Deslizante';
+          break;
+        case 'basculante':
+          funcaoTexto = 'Basculante';
+          break;
+        case 'superiorDireita':
+          funcaoTexto = 'Superior Direita';
+          break;
+        case 'superiorEsquerda':
+          funcaoTexto = 'Superior Esquerda';
+          break;
+        case 'inferiorDireita':
+          funcaoTexto = 'Inferior Direita';
+          break;
+        case 'inferiorEsquerda':
+          funcaoTexto = 'Inferior Esquerda';
+          break;
+        default:
+          funcaoTexto = config.funcao;
       }
     }
     funcao.textContent = funcaoTexto;
   }
   
+  // Atualizar célula de puxador
   const puxador = document.getElementById('specs-puxador');
   if (puxador) {
-    if (config.puxador?.modelo === 'S/Puxador') {
-      puxador.textContent = 'Sem puxador';
-    } else {
-      const posicao = config.puxador?.posicao === 'vertical' ? 'Vertical' : 'Horizontal';
+    if (config.puxador && config.puxador.modelo !== 'S/Puxador') {
+      const posicao = config.puxador.posicao === 'horizontal' ? 'Horizontal' : 'Vertical';
       const medida = config.puxador?.medida || '-';
       puxador.textContent = `${config.puxador?.modelo || '-'} ${posicao} (${medida} mm)`;
     }
   }
 }
-
-// Sobrescrever a função desenharPorta para também atualizar especificações
-const desenharPortaOriginal = desenharPorta;
-window.desenharPorta = function(config) {
-  // Chamar a função original
-  const resultado = desenharPortaOriginal(config);
-  
-  // Atualizar as especificações
-  atualizarEspecificacoes(config);
-  
-  return resultado;
-}; 
 
 /**
  * Inicializa a conexão com Supabase
@@ -571,10 +584,11 @@ function inicializarSupabase() {
 }
 
 /**
- * Inicializa a aplicação completa
+ * Inicializa a aplicação completa de forma assíncrona
  * Função utilitária para diagnóstico e para inicializar tudo novamente se necessário
+ * @returns {Promise<boolean>} - Resultado da inicialização
  */
-function inicializarAplicacao() {
+async function inicializarAplicacao() {
     console.log('Inicializando aplicação manualmente...');
     
     try {
@@ -584,17 +598,31 @@ function inicializarAplicacao() {
         // Inicializar módulos
         inicializarCadastramento();
         
-        // Inicializar sistema base
-        inicializar();
+        // Inicializar sistema base de forma assíncrona
+        await inicializar();
+        console.log('Sistema base inicializado');
         
-        // Inicializar armazenamento
-        inicializarArmazenamento(false);
+        // Inicializar armazenamento sem carregar a última configuração ainda
+        await inicializarArmazenamento(false);
+        console.log('Sistema de armazenamento inicializado');
         
-        // Verificar elemento de desenho
-        verificarElementoDesenho();
+        // Verificar e criar elemento de desenho se necessário
+        await verificarElementoDesenho();
+        console.log('Elemento de desenho verificado');
         
-        // Inicializar canvas
-        inicializarCanvas('desenho');
+        // Inicializar canvas - crítico para o funcionamento da aplicação
+        const canvasInicializado = await inicializarCanvas('desenho');
+        if (!canvasInicializado) {
+            console.warn('Falha ao inicializar canvas, tentando método alternativo...');
+            
+            // Tentar método alternativo forçando a criação do elemento
+            if (!forcarCriacaoElementoDesenho()) {
+                throw new Error('Falha ao inicializar canvas após múltiplas tentativas');
+            }
+            console.log('Canvas inicializado com método alternativo');
+        } else {
+            console.log('Canvas inicializado com sucesso');
+        }
         
         // Inicializar controles e UI
         inicializarControlesUI();
@@ -614,12 +642,39 @@ function inicializarAplicacao() {
             toggleFuncaoPorta(funcaoPorta.value);
         }
         
+        // Carregar a última configuração agora que tudo está inicializado
+        try {
+            await carregarUltimaConfiguracao();
+            console.log('Última configuração carregada com sucesso');
+        } catch (configError) {
+            console.warn('Erro ao carregar última configuração:', configError);
+            // Desenhar com configuração padrão
+            const configPadrao = obterConfiguracaoAtual();
+            desenharPorta(configPadrao);
+            console.log('Usando configuração padrão para desenho inicial');
+        }
+        
         console.log('Aplicação reinicializada com sucesso');
         mostrarNotificacao('Sistema reinicializado com sucesso', 'success');
         return true;
     } catch (error) {
         console.error('Erro ao reinicializar aplicação:', error);
         mostrarNotificacao('Erro ao reinicializar a aplicação: ' + error.message, 'error');
+        
+        // Tentar recuperação parcial para problemas no desenho
+        if (error.message && error.message.includes('canvas')) {
+            console.log('Tentando recuperação de emergência para o canvas...');
+            setTimeout(() => {
+                try {
+                    if (forcarCriacaoElementoDesenho()) {
+                        mostrarNotificacao('Recuperação parcial realizada', 'info');
+                    }
+                } catch (e) {
+                    console.error('Falha na recuperação de emergência:', e);
+                }
+            }, 1000);
+        }
+        
         return false;
     }
 } 
@@ -694,4 +749,107 @@ function diagnosticarImpressao() {
             stack: error.stack
         };
     }
+} 
+
+/**
+ * Testa o comportamento das cotas do puxador com diferentes valores
+ * Enfoque especial na cota inferior
+ */
+function iniciarTesteCotasPuxador() {
+  console.log('🧪 INICIANDO TESTE DE COTAS DO PUXADOR');
+  
+  // Verificar se estamos em uma porta compatível
+  const config = obterConfiguracaoAtual();
+  
+  if (!config.puxador || config.puxador.modelo === 'S/Puxador') {
+    mostrarNotificacao('❌ Teste requer um puxador configurado. Configure um puxador primeiro.', 'error');
+    return;
+  }
+  
+  if (config.puxador.posicao !== 'vertical') {
+    mostrarNotificacao('❌ Teste otimizado para puxadores verticais. Mudando para vertical.', 'warning');
+    // Configurar puxador vertical
+    const puxadorPosicaoSelect = document.getElementById('puxadorPosicao');
+    if (puxadorPosicaoSelect) {
+      puxadorPosicaoSelect.value = 'vertical';
+      puxadorPosicaoSelect.dispatchEvent(new Event('change'));
+    }
+  }
+  
+  mostrarNotificacao('🧪 Teste de cotas iniciado! Observe o puxador se movendo...', 'info');
+  
+  // Salvar valores originais
+  const puxadorCotaSuperior = document.getElementById('puxadorCotaSuperior');
+  const puxadorCotaInferior = document.getElementById('puxadorCotaInferior');
+  
+  if (!puxadorCotaSuperior || !puxadorCotaInferior) {
+    mostrarNotificacao('❌ Campos de cota não encontrados', 'error');
+    return;
+  }
+  
+  const cotaSuperiorOriginal = puxadorCotaSuperior.value;
+  const cotaInferiorOriginal = puxadorCotaInferior.value;
+  
+     console.log('📊 Valores originais:', {
+     cotaSuperior: cotaSuperiorOriginal,
+     cotaInferior: cotaInferiorOriginal,
+     alturaPorta: config.altura,
+     medidaPuxador: config.puxador.medida
+   });
+  
+  // Sequência de testes focando na cota inferior
+  const sequenciaTestes = [
+    { cotaInf: 500, desc: '🔽 Puxador mais próximo da base (500mm)' },
+    { cotaInf: 800, desc: '🔽 Posição intermediária baixa (800mm)' },
+    { cotaInf: 1200, desc: '🔽 Posição intermediária alta (1200mm)' },
+    { cotaInf: 1500, desc: '🔽 Puxador mais distante da base (1500mm)' },
+    { cotaInf: 200, desc: '🔽 Posição muito baixa (200mm)' },
+    { cotaInf: cotaInferiorOriginal, desc: '🔄 Retornando ao valor original' }
+  ];
+  
+  let indiceAtual = 0;
+  
+  function executarProximoTeste() {
+    if (indiceAtual >= sequenciaTestes.length) {
+      mostrarNotificacao('✅ Teste concluído! O puxador deve ter se movido conforme as cotas.', 'success');
+      console.log('✅ Teste de cotas do puxador concluído');
+      return;
+    }
+    
+    const teste = sequenciaTestes[indiceAtual];
+    console.log(`🧪 Teste ${indiceAtual + 1}: ${teste.desc}`);
+    
+    // Atualizar cota inferior
+    puxadorCotaInferior.value = teste.cotaInf;
+    puxadorCotaInferior.dispatchEvent(new Event('change'));
+    
+    // Calcular e atualizar cota superior automaticamente
+    const alturaPuxador = parseInt(config.puxador.medida, 10) || 150;
+    const novaCotaSuperior = Math.max(0, config.altura - (teste.cotaInf + alturaPuxador));
+    
+    puxadorCotaSuperior.value = novaCotaSuperior;
+    puxadorCotaSuperior.dispatchEvent(new Event('change'));
+    
+    // Forçar redesenho
+    if (typeof window.desenharPorta === 'function') {
+      window.desenharPorta(obterConfiguracaoAtual(), true);
+    }
+    
+    // Log detalhado
+    console.log(`📐 Cotas aplicadas:`, {
+      cotaInferior: teste.cotaInf,
+      cotaSuperior: novaCotaSuperior,
+      alturaPuxador: alturaPuxador,
+      soma: teste.cotaInf + novaCotaSuperior + alturaPuxador,
+      alturaPorta: config.altura
+    });
+    
+    mostrarNotificacao(teste.desc, 'info');
+    
+    indiceAtual++;
+    setTimeout(executarProximoTeste, 2000); // 2 segundos entre cada teste
+  }
+  
+  // Iniciar a sequência de testes
+  setTimeout(executarProximoTeste, 500);
 } 

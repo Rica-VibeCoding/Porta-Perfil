@@ -349,36 +349,8 @@ function diagnosticarProblemaRedesenho() {
   const atualizarDesenhoOriginal = window.atualizarDesenho;
   const atualizarAlturaOriginal = window.atualizarAlturaERecalcularDobradicasImediatamente;
   
-  // 3. Substituir a função desenharPorta por uma versão com debounce
-  window.desenharPorta = function(config, forceRedraw) {
-    // Usar uma variável global para controlar o tempo entre redesenhos
-    if (window._bloqueioDesenho) {
-      console.log("DIAGNÓSTICO: Bloqueando chamada duplicada à desenharPorta");
-      return;
-    }
-    
-    // Ativar bloqueio temporário
-    window._bloqueioDesenho = true;
-    
-    // Registrar detalhes da chamada para diagnóstico
-    console.log("DIAGNÓSTICO: Chamada à desenharPorta", {
-      timestamp: new Date().toISOString(),
-      forceRedraw: forceRedraw,
-      configAltura: config?.altura
-    });
-    
-    // Executar o desenho
-    try {
-      desenharPortaOriginal(config, forceRedraw);
-    } catch (error) {
-      console.error("DIAGNÓSTICO: Erro ao desenhar porta", error);
-    }
-    
-    // Remover bloqueio após um tempo
-    setTimeout(() => {
-      window._bloqueioDesenho = false;
-    }, 500); // 500ms de debounce
-  };
+  // 3. Substituir a função desenharPorta por uma versão com debounce - REMOVIDO
+  // Esta redefinição estava causando conflitos. O desenho agora é controlado diretamente.
   
   // 4. Substituir a função atualizarDesenho se existir
   if (typeof atualizarDesenhoOriginal === 'function') {

@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Diagnóstico de visibilidade para áreas de impressão
   function diagnosticarAreasImpressao() {
+    console.log('🔍 [DIAGNÓSTICO] Área de impressão está invisível, tentando corrigir...');
     console.log('📄 Diagnóstico de áreas de impressão:');
     
     // Verificar todas as áreas dedicadas à impressão
@@ -367,11 +368,11 @@ document.addEventListener('DOMContentLoaded', function() {
     return true;
   }
   
-  // Executar diagnóstico inicial
-  // setTimeout(() => {
-  //   diagnosticarAreasImpressao();
-  //   diagnosticarLogosImpressao();
-  // }, 2000);
+  // Executar diagnóstico inicial e correções automáticas
+  setTimeout(() => {
+    console.log('🔍 [AUTO-CORREÇÃO] Executando diagnóstico e correção da área de impressão...');
+    corrigirTudo();
+  }, 2000);
   
   // Exportar funções para uso global
   window.fixPrintModule = {

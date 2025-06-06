@@ -595,10 +595,7 @@ function atualizarAlturaERecalcularDobradicasImediatamente(novaAltura) {
     }
   }
     
-  // Recalcular posições do puxador vertical
-  if (typeof window.recalcularPosicoesPuxador === 'function') {
-    window.recalcularPosicoesPuxador(alturaAntiga, novaAltura);
-  }
+  // Redesenho completo garantirá que todas as coordenadas sejam recalculadas
     
   // Agora que todas as atualizações foram feitas, forçar o redesenho UMA VEZ
   if (typeof window.desenharPorta === 'function') {
