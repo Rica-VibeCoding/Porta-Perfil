@@ -13,10 +13,28 @@ const headers = {
   'apikey': SUPABASE_ANON_KEY
 };
 
-// Gerar ID do usuário
+// Gerar ID do usuário (SINCRONIZADO COM storage-supabase-only.js)
 function gerarIdUsuario() {
+  // NOVA LÓGICA: Verificar se há usuário autenticado
+  try {
+    const userData = localStorage.getItem('porta_perfil_user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      if (user && user.email) {
+        // Usar email do usuário como ID (mais seguro e confiável)
+        const idUsuarioAuth = btoa(user.email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+        console.log(`[Debug Supabase] Usando ID do usuário autenticado: ${user.email} -> ${idUsuarioAuth}`);
+        return idUsuarioAuth;
+      }
+    }
+  } catch (error) {
+    console.warn('[Debug Supabase] Erro ao obter usuário autenticado:', error);
+  }
+  
+  // FALLBACK: Sistema antigo baseado em navegador
   const idSalvo = localStorage.getItem('user_unique_id');
   if (idSalvo) {
+    console.warn('[Debug Supabase] Usando ID de fallback baseado em navegador');
     return idSalvo;
   }
   
@@ -29,6 +47,7 @@ function gerarIdUsuario() {
   const hash = btoa(dados).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
   
   localStorage.setItem('user_unique_id', hash);
+  console.warn('[Debug Supabase] Criado novo ID de fallback baseado em navegador');
   return hash;
 }
 
@@ -287,8 +306,48 @@ window.testarNovoCarregamento = async function() {
   }
 };
 
+// Função para verificar informações do usuário atual
+window.verificarUsuarioAtual = function() {
+  console.log('[DIAGNÓSTICO USUÁRIO] Verificando dados do usuário...');
+  
+  try {
+    // Verificar dados do usuário autenticado
+    const userData = localStorage.getItem('porta_perfil_user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      console.log('[USUÁRIO AUTENTICADO]', {
+        nome: user.nome,
+        email: user.email,
+        empresa: user.empresa
+      });
+    } else {
+      console.log('[USUÁRIO] Nenhum usuário autenticado encontrado');
+    }
+    
+    // Verificar ID gerado
+    const idGerado = gerarIdUsuario();
+    console.log('[ID USUÁRIO GERADO]', idGerado);
+    
+    // Verificar dados antigos de fallback
+    const idFallback = localStorage.getItem('user_unique_id');
+    console.log('[ID FALLBACK]', idFallback);
+    
+    return {
+      usuarioAutenticado: userData ? JSON.parse(userData) : null,
+      idGerado: idGerado,
+      idFallback: idFallback,
+      usandoIdAutenticado: userData ? true : false
+    };
+    
+  } catch (error) {
+    console.error('[DIAGNÓSTICO USUÁRIO] Erro:', error);
+    return { erro: error.message };
+  }
+};
+
 console.log('[DEBUG SUPABASE] Funções carregadas:');
 console.log('- debugSupabase() - Teste completo');
 console.log('- debugDeleteReal() - Teste delete permanente');
 console.log('- debugCampos() - Teste campos específicos');
 console.log('- testarNovoCarregamento() - Teste novo sistema de carregamento');
+console.log('- verificarUsuarioAtual() - Verificar dados do usuário logado');

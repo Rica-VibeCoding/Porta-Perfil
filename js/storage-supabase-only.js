@@ -26,11 +26,30 @@ const headers = {
 let USE_HARD_DELETE = true; // Alterado para DELETE real por padrão
 
 /**
- * Gera um ID único para o usuário baseado em informações do navegador
+ * Gera um ID único para o usuário baseado no usuário autenticado
+ * Prioriza email do usuário logado, fallback para ID baseado em navegador
  */
 function gerarIdUsuario() {
+  // NOVA LÓGICA: Verificar se há usuário autenticado
+  try {
+    const userData = localStorage.getItem('porta_perfil_user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      if (user && user.email) {
+        // Usar email do usuário como ID (mais seguro e confiável)
+        const idUsuarioAuth = btoa(user.email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+        console.log(`[Storage Supabase] Usando ID do usuário autenticado: ${user.email} -> ${idUsuarioAuth}`);
+        return idUsuarioAuth;
+      }
+    }
+  } catch (error) {
+    console.warn('[Storage Supabase] Erro ao obter usuário autenticado:', error);
+  }
+  
+  // FALLBACK: Sistema antigo baseado em navegador (para compatibilidade)
   const idSalvo = localStorage.getItem('user_unique_id');
   if (idSalvo) {
+    console.warn('[Storage Supabase] Usando ID de fallback baseado em navegador (não seguro para multi-usuário)');
     return idSalvo;
   }
 
@@ -43,6 +62,7 @@ function gerarIdUsuario() {
   const hash = btoa(dados).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
   
   localStorage.setItem('user_unique_id', hash);
+  console.warn('[Storage Supabase] Criado novo ID de fallback baseado em navegador (não seguro para multi-usuário)');
   return hash;
 }
 
@@ -359,6 +379,9 @@ async function carregarConfiguracoesNoModal() {
         <p class="mt-2">Carregando projetos...</p>
       </div>
     `;
+
+    // EXECUTAR MIGRAÇÃO AUTOMÁTICA (se necessário)
+    await migrarProjetosParaUsuarioAutenticado();
 
     // Carregar projetos
     const projetos = await carregarProjetos();
@@ -1025,6 +1048,97 @@ async function popularFormularioCompleto(dados) {
 }
 
 /**
+ * Migra projetos antigos do ID de navegador para o ID do usuário autenticado
+ * Executa apenas uma vez quando detecta mudança de sistema de ID
+ */
+async function migrarProjetosParaUsuarioAutenticado() {
+  console.log('[Storage Supabase] Verificando necessidade de migração de projetos...');
+  
+  try {
+    // Verificar se há usuário autenticado
+    const userData = localStorage.getItem('porta_perfil_user');
+    if (!userData) {
+      console.log('[Storage Supabase] Nenhum usuário autenticado, migração não necessária');
+      return 0;
+    }
+    
+    const user = JSON.parse(userData);
+    if (!user.email) {
+      console.log('[Storage Supabase] Usuário sem email, migração não possível');
+      return 0;
+    }
+    
+    // Gerar IDs antigo e novo
+    const idFallback = localStorage.getItem('user_unique_id');
+    const idNovoUsuario = btoa(user.email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+    
+    if (!idFallback || idFallback === idNovoUsuario) {
+      console.log('[Storage Supabase] Migração não necessária ou já realizada');
+      return 0;
+    }
+    
+    // Verificar se já foi migrado
+    const chaveControle = `migrated_${idFallback}_to_${idNovoUsuario}`;
+    if (localStorage.getItem(chaveControle)) {
+      console.log('[Storage Supabase] Migração já foi realizada anteriormente');
+      return 0;
+    }
+    
+    console.log(`[Storage Supabase] Migrando projetos de ${idFallback} para ${idNovoUsuario} (${user.email})`);
+    
+    // Buscar projetos do ID antigo
+    const urlProjetos = `${SUPABASE_URL}/rest/v1/Salvar_Portas?id_usuario=eq.${idFallback}&select=*`;
+    const respProjetos = await fetch(urlProjetos, { method: 'GET', headers });
+    const projetosAntigos = await respProjetos.json();
+    
+    if (projetosAntigos.length === 0) {
+      console.log('[Storage Supabase] Nenhum projeto antigo encontrado para migrar');
+      localStorage.setItem(chaveControle, 'completed');
+      return 0;
+    }
+    
+    console.log(`[Storage Supabase] Encontrados ${projetosAntigos.length} projetos para migrar`);
+    
+    // Migrar cada projeto
+    let projetosMigrados = 0;
+    for (const projeto of projetosAntigos) {
+      try {
+        // Atualizar o id_usuario do projeto
+        const urlUpdate = `${SUPABASE_URL}/rest/v1/Salvar_Portas?id=eq.${projeto.id}&id_usuario=eq.${idFallback}`;
+        const respUpdate = await fetch(urlUpdate, {
+          method: 'PATCH',
+          headers: { ...headers, 'Prefer': 'return=representation' },
+          body: JSON.stringify({ id_usuario: idNovoUsuario })
+        });
+        
+        if (respUpdate.ok) {
+          projetosMigrados++;
+          console.log(`[Storage Supabase] Projeto "${projeto.nome}" migrado com sucesso`);
+        } else {
+          console.error(`[Storage Supabase] Erro ao migrar projeto "${projeto.nome}"`);
+        }
+      } catch (error) {
+        console.error(`[Storage Supabase] Erro ao migrar projeto "${projeto.nome}":`, error);
+      }
+    }
+    
+    // Marcar como migrado
+    localStorage.setItem(chaveControle, 'completed');
+    console.log(`[Storage Supabase] Migração concluída: ${projetosMigrados}/${projetosAntigos.length} projetos migrados`);
+    
+    if (projetosMigrados > 0) {
+      mostrarNotificacao(`${projetosMigrados} projeto(s) migrado(s) para sua conta`, 'success');
+    }
+    
+    return projetosMigrados;
+    
+  } catch (error) {
+    console.error('[Storage Supabase] Erro durante migração:', error);
+    return 0;
+  }
+}
+
+/**
  * Limpa projetos inativos existentes no banco
  * Remove projetos marcados como ativo: false
  */
@@ -1081,6 +1195,7 @@ if (typeof window !== 'undefined') {
     carregarConfiguracao: carregarConfiguracao,
     carregarProjetoCompleto: carregarProjetoCompleto, // NOVA FUNÇÃO COMPLETA
     popularFormularioCompleto: popularFormularioCompleto, // NOVA FUNÇÃO DE POPULAÇÃO
+    migrarProjetosParaUsuarioAutenticado: migrarProjetosParaUsuarioAutenticado, // MIGRAÇÃO DE PROJETOS
     excluirConfiguracao: excluirProjeto,
     excluirProjetoReal: excluirProjetoReal, // DELETE permanente
     limparProjetosInativos: limparProjetosInativos, // Limpar projetos arquivados
@@ -1094,6 +1209,8 @@ if (typeof window !== 'undefined') {
   console.log('[Storage Supabase] Novas funções de carregamento completo:');
   console.log('  - window.storageSupabase.carregarProjetoCompleto(id)');
   console.log('  - window.storageSupabase.popularFormularioCompleto(dados)');
+  console.log('[Storage Supabase] Função de migração:');
+  console.log('  - window.storageSupabase.migrarProjetosParaUsuarioAutenticado()');
   console.log('[Storage Supabase] Funções de debug disponíveis:');
   console.log('  - window.storageSupabase.testarCRUDCompleto()');
   console.log('  - window.storageSupabase.testarExclusao()');
