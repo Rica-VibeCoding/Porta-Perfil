@@ -350,18 +350,26 @@ export function desenharPuxadorSVG(x, y, altura, ladoDireito = false, larguraPor
     let posY;
     
     // As cotas já foram calculadas no início da função para portas deslizantes e de giro
-    // Para outras portas (basculante, etc.), verificar configuração de cota superior/inferior
+    // Para outras portas (basculante, etc.), usar cálculo matematicamente correto
     if (!ehDeslizante && !ehGiro) {
       cotaSuperior = parseInt(config.puxador.cotaSuperior, 10);
       cotaInferior = parseInt(config.puxador.cotaInferior, 10);
       
-      // Usar valores padrão se não estiverem definidos
-      if (isNaN(cotaSuperior) || cotaSuperior < 0) {
-        cotaSuperior = 950; // valor padrão
+      // CORREÇÃO MATEMÁTICA: Usar valores matematicamente corretos
+      if (isNaN(cotaInferior) || cotaInferior < 0) {
+        cotaInferior = 1000; // valor padrão da cota inferior
       }
       
-      if (isNaN(cotaInferior) || cotaInferior < 0) {
-        cotaInferior = 1000; // valor padrão
+      if (isNaN(cotaSuperior) || cotaSuperior < 0) {
+        // Calcular cota superior baseada na altura da porta
+        const alturaPortaMm = altura / CONFIG.escala;
+        cotaSuperior = Math.max(0, alturaPortaMm - medida - cotaInferior);
+        console.log('[CORREÇÃO MATEMÁTICA] Cota superior calculada:', {
+          alturaPortaMm,
+          medidaPuxador: medida,
+          cotaInferior,
+          cotaSuperiorCalculada: cotaSuperior
+        });
       }
     }
     

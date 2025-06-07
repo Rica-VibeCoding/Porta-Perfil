@@ -123,8 +123,24 @@ function recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, tipoPorta = 
  * @returns {object} - Objeto com cotas padrão
  */
 function obterCotasPadraoParaGiro(alturaPorta = 2450, medidaPuxador = 150, funcao = '') {
-  // Para portas de giro, usar centralização automática
-  return recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, 'giro');
+  // CORREÇÃO MATEMÁTICA: Para portas de giro, usar cálculo matematicamente correto
+  // com cota inferior padrão de 1000mm
+  const cotaInferiorPadrao = 1000;
+  const cotaSuperiorCalculada = alturaPorta - medidaPuxador - cotaInferiorPadrao;
+  
+  console.log('[CORREÇÃO MATEMÁTICA] Cálculo correto para porta de giro:', {
+    alturaPorta,
+    medidaPuxador,
+    cotaInferiorPadrao,
+    cotaSuperiorCalculada,
+    verificacao: cotaSuperiorCalculada + medidaPuxador + cotaInferiorPadrao
+  });
+  
+  return {
+    cotaSuperior: Math.max(0, cotaSuperiorCalculada),
+    cotaInferior: cotaInferiorPadrao,
+    posicao: 'vertical'
+  };
 }
 
 /**

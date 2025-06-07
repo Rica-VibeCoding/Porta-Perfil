@@ -34,12 +34,12 @@ const VALORES_PADRAO = {
   numDobradicas: 4,
   dobradicas: [100, 500, 1000, 2000], // Posições originais
   
-  // PUXADOR (configuração original do sistema)
+  // PUXADOR (configuração corrigida matematicamente)
   puxadorModelo: 'Cielo', // Original era 'Cielo'
   puxadorPosicao: 'vertical',
   puxadorMedida: '150',
   puxadorLados: 'direito', // Original era 'direito'
-  puxadorCotaSuperior: 950,
+  puxadorCotaSuperior: 1300, // CORRIGIDO: 2450 - 150 - 1000 = 1300
   puxadorCotaInferior: 1000,
   puxadorDeslocamento: 100,
   

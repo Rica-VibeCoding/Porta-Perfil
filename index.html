@@ -710,7 +710,7 @@
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <textarea id="observacaoInput" class="form-control" rows="6" placeholder="Observações adicionais sobre o pedido"></textarea>
+            <textarea id="observacaoInput" class="form-control" rows="6"></textarea>
           </div>
         </div>
         <div class="modal-footer">
@@ -864,11 +864,11 @@
           <form id="loginForm">
             <div class="mb-3 input-icon">
               <i class="bi bi-person"></i>
-              <input type="text" class="form-control form-control-lg" id="loginNome" placeholder="Digite seu nome" required>
+              <input type="text" class="form-control form-control-lg" id="loginNome" required>
             </div>
             <div class="mb-3 input-icon">
               <i class="bi bi-envelope"></i>
-              <input type="email" class="form-control form-control-lg" id="loginEmail" placeholder="Digite seu email" required>
+              <input type="email" class="form-control form-control-lg" id="loginEmail" required>
             </div>
             <div class="d-grid">
               <button type="button" class="btn btn-primary btn-lg" id="btnLoginSubmit">Entrar</button>
@@ -896,15 +896,15 @@
           <form id="cadastroForm">
             <div class="mb-3 input-icon">
               <i class="bi bi-person"></i>
-              <input type="text" class="form-control form-control-lg" id="cadastroNome" placeholder="Digite seu nome" required>
+              <input type="text" class="form-control form-control-lg" id="cadastroNome" required>
             </div>
             <div class="mb-3 input-icon">
               <i class="bi bi-envelope"></i>
-              <input type="email" class="form-control form-control-lg" id="cadastroEmail" placeholder="Digite seu email" required>
+              <input type="email" class="form-control form-control-lg" id="cadastroEmail" required>
             </div>
             <div class="mb-3 input-icon">
               <i class="bi bi-building"></i>
-              <input type="text" class="form-control form-control-lg" id="cadastroEmpresa" placeholder="Nome da empresa" required>
+              <input type="text" class="form-control form-control-lg" id="cadastroEmpresa" required>
             </div>
             <div class="d-grid">
               <button type="button" class="btn btn-primary btn-lg" id="btnCadastroSubmit">Cadastrar</button>
@@ -985,9 +985,33 @@
             
             <!-- Aba Vidros -->
             <div class="tab-pane fade" id="vidros-content" role="tabpanel" aria-labelledby="vidros-tab">
-              <div class="alert alert-info">
-                <i class="bi bi-info-circle-fill me-2"></i>
-                Funcionalidade de cadastro de vidros em desenvolvimento.
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0"><i class="bi bi-window me-2"></i>Lista de Vidros</h6>
+                <div>
+                  <button class="btn btn-primary btn-sm me-2" id="btnNovoVidro">
+                    <i class="bi bi-plus-circle"></i> Novo Vidro
+                  </button>
+                  <button class="btn btn-outline-secondary btn-sm" onclick="testarSistemaVidros()">
+                    <i class="bi bi-bug"></i> Testar Sistema
+                  </button>
+                </div>
+              </div>
+              
+              <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm">
+                  <thead>
+                    <tr>
+                      <th>Tipo</th>
+                      <th>Cor RGB</th>
+                      <th>Criado em</th>
+                      <th>Status</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabelaVidros">
+                    <!-- Dados serão carregados dinamicamente -->
+                  </tbody>
+                </table>
               </div>
             </div>
             
@@ -1058,13 +1082,13 @@
             
             <div class="mb-2">
               <label for="itemFabricante" class="form-label">Fabricante (opcional)</label>
-              <input type="text" class="form-control form-control-sm" id="itemFabricante" name="fabricante" placeholder="Ex: Rometal, Kit (opcional)">
+              <input type="text" class="form-control form-control-sm" id="itemFabricante" name="fabricante">
               <div class="invalid-feedback">Por favor, informe o fabricante.</div>
             </div>
             
             <div class="mb-2">
               <label for="itemCor" class="form-label">Cor (opcional)</label>
-              <input type="text" class="form-control form-control-sm" id="itemCor" name="cor" placeholder="Ex: Branco, Preto (opcional)">
+              <input type="text" class="form-control form-control-sm" id="itemCor" name="cor">
               <div class="invalid-feedback">Por favor, informe a cor.</div>
             </div>
             
@@ -1169,20 +1193,45 @@
   <!-- Script principal como ES module -->
   <script type="module" src="js/main.js"></script>
 
-  <!-- Carrega o módulo de gerenciamento de usuários -->
+  <!-- Carrega o modal coordinator primeiro -->
+  <script type="module">
+    import { modalCoordinator } from './js/modal-coordinator.js';
+    
+    // Inicializar coordenador de modal primeiro
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        modalCoordinator.init();
+        console.log('✅ Modal Coordinator inicializado');
+      }, 100);
+    });
+  </script>
+
+  <!-- Carrega o módulo de gerenciamento de usuários e vidros refatorado -->
   <script type="module">
     import { inicializarGerenciamentoUsuarios } from './js/usuarios.js';
+    import { inicializarVidros } from './js/vidros/vidros-main.js';
+    import { inicializarVidrosSupabase } from './js/vidros-supabase.js';
     
-    // Inicializar o gerenciamento de usuários quando o DOM estiver pronto
+    // Inicializar módulos quando o DOM estiver pronto
     document.addEventListener('DOMContentLoaded', () => {
       // Aguardar um momento para garantir que outros módulos tenham sido carregados
       setTimeout(() => {
         inicializarGerenciamentoUsuarios();
-        console.log('✅ Módulo de gerenciamento de usuários inicializado');
+        inicializarVidros();
+        inicializarVidrosSupabase();
+        console.log('✅ Módulos de usuários, vidros refatorados e integração Supabase inicializados');
       }, 500);
     });
   </script>
+  
+  <!-- Script de testes do sistema de vidros -->
+  <script src="js/teste-sistema-vidros.js"></script>
 
+  <!-- Carrega os módulos do novo sistema de cadastramento -->
+  <script type="module" src="js/cadastro-core.js"></script>
+  <script type="module" src="js/cadastro-supabase.js"></script>
+  <script type="module" src="js/cadastro-modal.js"></script>
+  
   <!-- Carrega o módulo de cadastramento -->
   <script type="module">
     import { inicializarCadastramento } from './js/cadastramento.js';

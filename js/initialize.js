@@ -23,7 +23,7 @@ let configuracaoAtual = {
     modelo: 'Cielo',
     medida: '150',
     posicao: 'vertical',
-    cotaSuperior: 950,
+    cotaSuperior: 1300, // CORRIGIDO: 2450 - 150 - 1000 = 1300
     cotaInferior: 1000,
     deslocamento: 100,
     lados: 'direito'

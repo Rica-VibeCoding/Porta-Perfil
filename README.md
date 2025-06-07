@@ -10,7 +10,9 @@ Este sistema permite a criação, personalização e impressão de desenhos téc
 
 - Configuração das dimensões da porta (altura e largura)
 - Seleção de tipo de vidro (Incolor, Fumê, Espelho, etc.)
-- Configuração de puxadores (posição, tamanho e tipo)
+- Configuração de puxadores (posição, tamanho, tipo e orientação horizontal/vertical)
+- Suporte a puxador horizontal e vertical em portas de giro e deslizantes (conforme escolha do usuário)
+- Puxador sempre horizontal em portas basculantes (por padrão técnico)
 - Visualização em tempo real das alterações
 - Impressão em formato A4 otimizada
 - Definição de dobradiças e suas posições
@@ -76,6 +78,11 @@ O sistema foi projetado de forma modular para facilitar a extensão. Novos tipos
 ---
 
 ## Changelog
+
+### Versão 1.2.0
+- Correção: Agora portas de giro e deslizantes respeitam a escolha do usuário para puxador horizontal ou vertical
+- Restrição: Portas basculantes continuam apenas com puxador horizontal
+- Refatoração: Removida sobrescrita indevida da posição do puxador em funções de cálculo de cotas
 
 ### Versão 1.1.0
 - Melhoria: Aprimoramento do tratamento de degradês para impressão

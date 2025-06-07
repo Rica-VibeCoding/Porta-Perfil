@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste do Fluxo do Modal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Teste do Sistema de Modal</h1>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <button class="btn btn-primary w-100 mb-2" id="btnNovoPuxador">
+                    <i class="bi bi-plus-circle"></i> Novo Puxador
+                </button>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-success w-100 mb-2" id="btnNovoTrilho">
+                    <i class="bi bi-plus-circle"></i> Novo Trilho
+                </button>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-info w-100 mb-2" id="btnNovoVidro">
+                    <i class="bi bi-plus-circle"></i> Novo Vidro
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <h3>Log de Testes</h3>
+            <div id="logTestes" class="bg-light p-3" style="height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.9em;">
+                <!-- Logs serão adicionados aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Formulário de Cadastro -->
+    <div class="modal fade modal-draggable" id="cadastroFormModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="cadastroFormModalLabel">
+        <div class="modal-dialog modal-dialog-centered modal-md" style="width: 440px !important; max-width: 90% !important;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cadastroFormModalLabel">
+                        <i class="bi bi-database-fill"></i> <span id="tituloFormCadastro">Novo Item</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formCadastro">
+                        <input type="hidden" id="itemId">
+                        
+                        <div class="mb-2">
+                            <label for="itemModelo" class="form-label">Modelo *</label>
+                            <input type="text" class="form-control form-control-sm" id="itemModelo" required>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label for="itemFabricante" class="form-label">Fabricante</label>
+                            <input type="text" class="form-control form-control-sm" id="itemFabricante">
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label for="itemCor" class="form-label">Cor</label>
+                            <input type="text" class="form-control form-control-sm" id="itemCor">
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label for="itemMedida" class="form-label">Medida</label>
+                            <input type="text" class="form-control form-control-sm" id="itemMedida">
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label for="itemFoto" class="form-label">Foto</label>
+                            <input type="file" class="form-control form-control-sm" id="itemFoto" accept="image/*">
+                        </div>
+                        
+                        <!-- Preview da foto -->
+                        <div id="fotoPreviewContainer" class="d-none mb-2">
+                            <img id="fotoPreview" class="img-thumbnail" style="max-height: 100px;">
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="btnRemoverFoto">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer py-1">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnSalvarCadastro">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts necessários -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@latest/dist/umd/supabase.min.js"></script>
+    
+    <!-- Carregar módulos do sistema -->
+    <script type="module">
+        let logElement;
+        
+        function adicionarLog(mensagem, tipo = 'info') {
+            if (!logElement) {
+                logElement = document.getElementById('logTestes');
+            }
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const cor = {
+                'info': 'text-primary',
+                'success': 'text-success',
+                'error': 'text-danger',
+                'warning': 'text-warning'
+            }[tipo] || 'text-primary';
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = cor;
+            logEntry.innerHTML = `[${timestamp}] ${mensagem}`;
+            
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // Função global para teste
+        window.adicionarLog = adicionarLog;
+        
+        adicionarLog('🔄 Inicializando teste do sistema de modal...', 'info');
+        
+        // Simular configuração do Supabase
+        if (!window.supabase) {
+            adicionarLog('⚠️ Supabase não disponível - simulando APIs', 'warning');
+            
+            // Mock das APIs
+            window.PuxadoresAPI = {
+                criar: async (dados) => {
+                    adicionarLog(`📝 Mock API: Criando puxador - ${dados.modelo}`, 'success');
+                    return { success: true, data: { id: Date.now(), ...dados } };
+                },
+                atualizar: async (id, dados) => {
+                    adicionarLog(`📝 Mock API: Atualizando puxador ${id} - ${dados.modelo}`, 'success');
+                    return { success: true, data: { id, ...dados } };
+                }
+            };
+            
+            window.TrilhosAPI = {
+                criar: async (dados) => {
+                    adicionarLog(`📝 Mock API: Criando trilho - ${dados.nome}`, 'success');
+                    return { success: true, data: { id: Date.now(), ...dados } };
+                },
+                atualizar: async (id, dados) => {
+                    adicionarLog(`📝 Mock API: Atualizando trilho ${id} - ${dados.nome}`, 'success');
+                    return { success: true, data: { id, ...dados } };
+                }
+            };
+            
+            window.VidrosAPI = {
+                criar: async (dados) => {
+                    adicionarLog(`📝 Mock API: Criando vidro - ${dados.tipo}`, 'success');
+                    return { success: true, data: { id: Date.now(), ...dados } };
+                },
+                atualizar: async (id, dados) => {
+                    adicionarLog(`📝 Mock API: Atualizando vidro ${id} - ${dados.tipo}`, 'success');
+                    return { success: true, data: { id, ...dados } };
+                }
+            };
+        }
+        
+        // Importar módulos
+        try {
+            const { modalCoordinator } = await import('./js/modal-coordinator.js');
+            adicionarLog('✅ Modal Coordinator carregado', 'success');
+            
+            // Inicializar
+            setTimeout(() => {
+                const inicializado = modalCoordinator.init();
+                if (inicializado) {
+                    adicionarLog('✅ Modal Coordinator inicializado', 'success');
+                    
+                    // Configurar botões de teste
+                    document.getElementById('btnNovoPuxador').addEventListener('click', () => {
+                        adicionarLog('🔘 Clicando em Novo Puxador...', 'info');
+                        modalCoordinator.openModal('puxador');
+                    });
+                    
+                    document.getElementById('btnNovoTrilho').addEventListener('click', () => {
+                        adicionarLog('🔘 Clicando em Novo Trilho...', 'info');
+                        modalCoordinator.openModal('trilho');
+                    });
+                    
+                    document.getElementById('btnNovoVidro').addEventListener('click', () => {
+                        adicionarLog('🔘 Clicando em Novo Vidro...', 'info');
+                        modalCoordinator.openModal('vidro');
+                    });
+                    
+                    adicionarLog('🎯 Sistema pronto para testes!', 'success');
+                    adicionarLog('   1. Clique em um dos botões acima', 'info');
+                    adicionarLog('   2. Preencha o formulário no modal', 'info');
+                    adicionarLog('   3. Clique em Salvar', 'info');
+                    adicionarLog('   4. Verifique os logs para confirmação', 'info');
+                } else {
+                    adicionarLog('❌ Falha ao inicializar Modal Coordinator', 'error');
+                }
+            }, 100);
+            
+        } catch (error) {
+            adicionarLog(`❌ Erro ao carregar módulos: ${error.message}`, 'error');
+        }
+        
+        // Mock das funções de carregamento
+        window.carregarPuxadores = () => {
+            adicionarLog('🔄 Recarregando tabela de puxadores...', 'success');
+        };
+        
+        window.carregarTrilhos = () => {
+            adicionarLog('🔄 Recarregando tabela de trilhos...', 'success');
+        };
+        
+        window.carregarVidros = () => {
+            adicionarLog('🔄 Recarregando tabela de vidros...', 'success');
+        };
+        
+        // Mock de notificações
+        window.mostrarNotificacao = (mensagem, tipo) => {
+            adicionarLog(`🔔 Notificação (${tipo}): ${mensagem}`, tipo === 'success' ? 'success' : 'warning');
+        };
+    </script>
+</body>
+</html>

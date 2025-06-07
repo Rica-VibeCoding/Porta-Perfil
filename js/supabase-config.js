@@ -185,6 +185,9 @@ class SupabaseClient {
 // Instância do cliente Supabase
 const supabase = new SupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Expor cliente globalmente para outros módulos
+window.supabaseCliente = supabase;
+
 /**
  * Funções específicas para gerenciar projetos de portas
  */
