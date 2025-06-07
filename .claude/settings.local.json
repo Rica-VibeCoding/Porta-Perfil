@@ -7,7 +7,13 @@
       "Bash(/home/ricar/.npm-global/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -n -A 10 -B 5 \"deslizante.*puxador\" \"/mnt/c/Users/ricar/Projetos/PORTAS PERFIS/js/\")",
       "Bash(npm test)",
       "Bash(npx jest:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(node:*)",
+      "Bash(rg:*)",
+      "Bash(sed:*)",
+      "Bash(find:*)",
+      "Bash(rm:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

@@ -5,7 +5,8 @@
 
 import { getCurrentUser, isCurrentUserAdmin as originalIsAdmin } from './auth.js';
 import { mostrarNotificacao } from './notifications.js';
-import supabase from './db-config.js';
+// Importar cliente customizado em vez do oficial
+import { supabase } from './supabase-config.js';
 
 // Sobrescrever a função isCurrentUserAdmin para sempre retornar true no contexto de cadastramento
 // Isso permite que todos os usuários tenham acesso total ao cadastramento
@@ -289,7 +290,7 @@ async function carregarUsuariosParaCache() {
             // carregar um pequeno conjunto inicial (limitado a 10)
             const { data, error } = await supabaseClient
                 .from('usuarios')
-                .select('id, nome, email')
+                .select('id,nome,email')
                 .order('criado_em', { ascending: false })
                 .limit(10);
                 
@@ -350,7 +351,7 @@ async function obterInfoUsuario(id_usuario) {
             const resultado = await Promise.race([
                 supabaseClient
                     .from('usuarios')
-                    .select('id, nome, email')
+                    .select('id,nome,email')
                     .eq('id', id_usuario)
                     .single(),
                 timeoutPromise
@@ -361,13 +362,13 @@ async function obterInfoUsuario(id_usuario) {
                 throw resultado.error;
             }
             
-            // Verificar se encontrou o usuário
-            if (!resultado.data) {
+            // Verificar se encontrou o usuário (nossa API retorna array)
+            if (!resultado.data || !Array.isArray(resultado.data) || resultado.data.length === 0) {
                 throw new Error('Usuário não encontrado');
             }
             
-            // Extrair dados
-            const { nome, email } = resultado.data;
+            // Extrair dados do primeiro resultado
+            const { nome, email } = resultado.data[0];
             const dados = {
                 nome: nome || email || 'Usuário sem nome',
                 email: email || ''
@@ -482,14 +483,12 @@ async function carregarPuxadores() {
         });
         
         // Todos os usuários agora veem todos os puxadores (como administradores)
-        const query = supabaseClient
+        console.log('Carregando todos os puxadores (acesso total para todos os usuários)');
+        
+        const { data, error } = await supabaseClient
             .from('puxadores')
             .select('*')
             .order('modelo');
-                
-        console.log('Carregando todos os puxadores (acesso total para todos os usuários)');
-        
-        const { data, error } = await query;
             
         if (error) {
             // Verificar se é erro de tabela não existente
@@ -1754,7 +1753,7 @@ async function carregarTrilhosNoSelect() {
         // Buscar trilhos ordenados por nome
         const { data, error } = await supabaseClient
             .from('trilhos')
-            .select('nome, tipo')
+            .select('nome,tipo')
             .order('nome');
             
         if (error) {

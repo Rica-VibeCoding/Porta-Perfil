@@ -296,6 +296,18 @@ function criarItemConfiguracao(config) {
   
   dimensoes.innerHTML = `<i class="bi bi-arrows-angle-expand"></i> ${largura}×${altura}mm`;
   
+  // Quantidade
+  const quantidade = document.createElement('span');
+  quantidade.className = 'config-quantidade';
+  let qtdProjeto = 1;
+  
+  if (config.dados) {
+    if (config.dados.quantidade) qtdProjeto = config.dados.quantidade;
+    else if (config.dados.dados && config.dados.dados.quantidade) qtdProjeto = config.dados.dados.quantidade;
+  }
+  
+  quantidade.innerHTML = `<i class="bi bi-123"></i> Qtd: ${qtdProjeto}`;
+  
   // Tipo de vidro
   const vidro = document.createElement('span');
   vidro.className = 'config-vidro';
@@ -362,6 +374,7 @@ function criarItemConfiguracao(config) {
   
   // Adicionar informações ao container de info
   infoContainer.appendChild(dimensoes);
+  infoContainer.appendChild(quantidade);
   infoContainer.appendChild(vidro);
   infoContainer.appendChild(funcao);
   infoContainer.appendChild(data);

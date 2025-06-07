@@ -17,9 +17,77 @@ function updateDobradicaInputs() {
     window.atualizarCamposPosicoesDobradicasQtd(num);
   }
   else {
-    console.error('Função atualizarCamposPosicoesDobradicasQtd não disponível');
-    // Recarregar a página pode ser necessário se isso acontecer
-    alert('Erro no sistema: Função de atualização de dobradiças não encontrada. Por favor, recarregue a página.');
+    console.warn('Função atualizarCamposPosicoesDobradicasQtd não disponível - tentando aguardar carregamento...');
+    
+    // Implementar retry com múltiplas tentativas
+    let tentativas = 0;
+    const maxTentativas = 10;
+    
+    const tentarNovamente = () => {
+      tentativas++;
+      
+      if (typeof window.atualizarCamposPosicoesDobradicasQtd === 'function') {
+        console.log(`Função encontrada após ${tentativas} tentativa(s) - executando...`);
+        window.atualizarCamposPosicoesDobradicasQtd(num);
+        return;
+      }
+      
+      if (tentativas < maxTentativas) {
+        // Aumentar progressivamente o delay
+        const delay = Math.min(50 * tentativas, 500);
+        setTimeout(tentarNovamente, delay);
+      } else {
+        console.error('Função atualizarCamposPosicoesDobradicasQtd ainda não disponível após ' + maxTentativas + ' tentativas');
+        // Implementação de fallback básica
+        updateDobradicaInputsFallback(num);
+      }
+    };
+    
+    tentarNovamente();
+  }
+}
+
+/**
+ * Função de fallback simples para atualizar campos de dobradiças
+ * Usada quando a função principal não está disponível
+ */
+function updateDobradicaInputsFallback(num) {
+  console.log('Executando fallback para atualização de dobradiças');
+  
+  const container = document.getElementById('dobradicasCampos');
+  if (!container) {
+    console.warn('Container de dobradiças não encontrado no fallback');
+    return;
+  }
+  
+  // Limpar container
+  container.innerHTML = '';
+  
+  if (num <= 0) {
+    return;
+  }
+  
+  // Criar campos simples
+  for (let i = 0; i < num; i++) {
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    
+    const label = document.createElement('span');
+    label.className = 'input-group-text';
+    label.innerText = `${i+1} Dob:`;
+    label.style.width = '65px';
+    
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'form-control';
+    input.id = `dobradicaPos${i+1}`;
+    input.value = 100 + (i * 200); // Posições simples
+    input.min = '0';
+    input.max = '3000';
+    
+    div.appendChild(label);
+    div.appendChild(input);
+    container.appendChild(div);
   }
 }
 

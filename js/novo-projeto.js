@@ -42,21 +42,9 @@ const VALORES_PADRAO = {
  */
 export function iniciarNovoProjeto() {
   try {
-    // Salvar o projeto atual antes de iniciar um novo
-    try {
-      // Tentar usar a função de salvar do módulo storage
-      const { salvarConfiguracaoRapida } = window.storageModule || {};
-      
-      if (typeof salvarConfiguracaoRapida === 'function') {
-        console.log('Salvando projeto atual antes de iniciar novo projeto...');
-        salvarConfiguracaoRapida();
-      } else {
-        console.log('Função salvarConfiguracaoRapida não disponível, continuando sem salvar');
-      }
-    } catch (saveError) {
-      console.warn('Erro ao salvar projeto atual:', saveError);
-      // Continuar com o novo projeto mesmo se o salvamento falhar
-    }
+    // REMOVIDO: Salvamento automático ao iniciar novo projeto
+    // O usuário deve salvar manualmente usando o botão "Salvar" se desejar
+    console.log('Iniciando novo projeto sem salvamento automático...');
 
     // Atualizar configuração com valores padrão
     atualizarConfiguracao(VALORES_PADRAO);

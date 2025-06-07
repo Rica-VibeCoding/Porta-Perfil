@@ -522,6 +522,7 @@ export {
   ehPortaGiro,
   obterCotasPadraoParaDeslizante,
   obterCotasPadraoParaGiro,
+  recalcularCotasParaCentralizar,
   validarDimensoesPuxador
 };
 

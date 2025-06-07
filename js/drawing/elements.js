@@ -8,7 +8,7 @@ import { criarElementoSVG, getSvgContainer } from './core.js';
 import { desenharCotaSVG } from './annotations.js';
 import { obterConfiguracaoAtual } from '../initialize.js';
 import { mmParaPixels, pixelsParaMm, pixelsParaMmInteiro, formatarValorCota } from './utils.js';
-import { ehPortaDeslizante, ehPortaGiro, obterCotasPadraoParaDeslizante, obterCotasPadraoParaGiro, validarDimensoesPuxador } from '../utils.js';
+import { ehPortaDeslizante, ehPortaGiro, obterCotasPadraoParaDeslizante, obterCotasPadraoParaGiro, recalcularCotasParaCentralizar, validarDimensoesPuxador } from '../utils.js';
 
 /**
  * Limpa todos os elementos do container SVG

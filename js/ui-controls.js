@@ -6,7 +6,7 @@ import { mostrarNotificacao } from './notifications.js';
 import { obterConfiguracaoAtual, atualizarConfiguracao } from './initialize.js';
 import { desenharPorta, atualizarDesenho } from './drawing.js';
 import { salvarLogoNoStorage } from './storage.js';
-import { ehPortaDeslizante, ehPortaGiro, obterCotasPadraoParaDeslizante, obterCotasPadraoParaGiro, validarDimensoesPuxador } from './utils.js';
+import { ehPortaDeslizante, ehPortaGiro, obterCotasPadraoParaDeslizante, obterCotasPadraoParaGiro, recalcularCotasParaCentralizar, validarDimensoesPuxador } from './utils.js';
 
 /**
  * Inicializa os controles do formulário
@@ -414,6 +414,9 @@ function handleAlturaChange() {
     }
   }
   
+  // NOVO: Recentralizar puxador automaticamente quando dimensões mudam
+  recentralizarPuxadorAutomaticamente(altura, alturaAntiga, configAtual);
+  
   // Redesenho completo garantirá que todas as coordenadas sejam recalculadas
   
   // Redesenhar a porta
@@ -421,6 +424,62 @@ function handleAlturaChange() {
     window.desenharPorta(obterConfiguracaoAtual(), true);
   } else if (typeof window.atualizarDesenho === 'function') {
     window.atualizarDesenho();
+  }
+}
+
+/**
+ * Recentraliza automaticamente o puxador quando as dimensões da porta mudam
+ */
+function recentralizarPuxadorAutomaticamente(novaAltura, alturaAntiga, config) {
+  // Verificar se há puxador configurado
+  if (!config.puxador || config.puxador.modelo === 'S/Puxador') {
+    return;
+  }
+  
+  // Verificar se é "Porta Inteira" - nesses casos não precisamos recentralizar
+  if (config.puxador.medida === 'Porta Inteira' || config.puxador.medida === 'Tamanho da Porta') {
+    return;
+  }
+  
+  const medidaPuxador = parseInt(config.puxador.medida, 10);
+  if (isNaN(medidaPuxador)) return;
+  
+  // Detectar tipo de porta
+  const ehDeslizante = ehPortaDeslizante(config.funcao);
+  const ehGiro = ehPortaGiro(config.funcao);
+  
+  if (ehDeslizante || ehGiro) {
+    // Recalcular cotas para centralizar o puxador
+    const cotasRecentralizadas = recalcularCotasParaCentralizar(novaAltura, medidaPuxador, ehDeslizante ? 'deslizante' : 'giro');
+    
+    console.log('[AUTO-CENTRALIZAR] Recentralizando puxador:', {
+      tipoPorta: ehDeslizante ? 'deslizante' : 'giro',
+      novaAltura,
+      alturaAntiga,
+      medidaPuxador,
+      cotasRecentralizadas
+    });
+    
+    // Atualizar configuração com as novas cotas centralizadas
+    atualizarConfiguracao({
+      puxador: {
+        ...config.puxador,
+        cotaSuperior: cotasRecentralizadas.cotaSuperior,
+        cotaInferior: cotasRecentralizadas.cotaInferior
+      }
+    });
+    
+    // Atualizar campos do formulário para refletir as novas cotas
+    const puxadorCotaSuperior = document.getElementById('puxadorCotaSuperior');
+    const puxadorCotaInferior = document.getElementById('puxadorCotaInferior');
+    
+    if (puxadorCotaSuperior) {
+      puxadorCotaSuperior.value = cotasRecentralizadas.cotaSuperior;
+    }
+    
+    if (puxadorCotaInferior) {
+      puxadorCotaInferior.value = cotasRecentralizadas.cotaInferior;
+    }
   }
 }
 
@@ -908,8 +967,7 @@ function inicializarControlesPuxador() {
               cotaInferior: cotaInferior
             }
           });
-        }
-        else {
+        } else {
           // Se for "Tamanho da Porta", apenas atualizar o valor
           atualizarConfiguracao({
             puxador: {
@@ -987,22 +1045,34 @@ function inicializarControlesPuxador() {
       const configAtual = obterConfiguracaoAtual();
       const novoValor = puxadorMedidaSelect.value;
       
-      // Se mudar para uma medida específica, definir valores das cotas
-      if (novoValor !== 'Tamanho da Porta') {
+      // Se mudar para uma medida específica, recentralizar automaticamente
+      if (novoValor !== 'Tamanho da Porta' && novoValor !== 'Porta Inteira') {
         const alturaTotalPorta = configAtual.altura;
         const alturaPuxador = parseInt(novoValor, 10);
         
-        // Para puxador vertical, manter cota inferior fixa em 1000mm
-        if (configAtual.puxador.posicao === 'vertical') {
-          const cotaInferior = 1000;
-          const cotaSuperior = alturaTotalPorta - (alturaPuxador + cotaInferior);
+        // NOVO: Usar sistema de centralização automática
+        const ehDeslizante = ehPortaDeslizante(configAtual.funcao);
+        const ehGiro = ehPortaGiro(configAtual.funcao);
+        
+        let cotasRecentralizadas;
+        if (ehDeslizante || ehGiro) {
+          // Usar nova função de centralização
+          cotasRecentralizadas = recalcularCotasParaCentralizar(alturaTotalPorta, alturaPuxador, ehDeslizante ? 'deslizante' : 'giro');
           
-          // Atualizar campos de interface
+          console.log('[AUTO-CENTRALIZAR] Medida do puxador alterada - recentralizando:', {
+            novoValor,
+            alturaPuxador,
+            alturaTotalPorta,
+            tipoPorta: ehDeslizante ? 'deslizante' : 'giro',
+            cotasRecentralizadas
+          });
+          
+          // Atualizar campos de interface com valores centralizados
           if (puxadorCotaSuperior) {
-            puxadorCotaSuperior.value = cotaSuperior;
+            puxadorCotaSuperior.value = cotasRecentralizadas.cotaSuperior;
           }
           if (puxadorCotaInferior) {
-            puxadorCotaInferior.value = cotaInferior;
+            puxadorCotaInferior.value = cotasRecentralizadas.cotaInferior;
           }
           
           // Atualizar configuração
@@ -1010,12 +1080,35 @@ function inicializarControlesPuxador() {
             puxador: { 
               ...configAtual.puxador, 
               medida: novoValor,
-              cotaSuperior: cotaSuperior,
-              cotaInferior: cotaInferior
+              cotaSuperior: cotasRecentralizadas.cotaSuperior,
+              cotaInferior: cotasRecentralizadas.cotaInferior
             } 
           });
-        } 
-        else {
+        } else {
+          // Para outros tipos de porta (lógica antiga)
+          // Para puxador vertical, manter cota inferior fixa em 1000mm
+          if (configAtual.puxador.posicao === 'vertical') {
+            const cotaInferior = 1000;
+            const cotaSuperior = alturaTotalPorta - (alturaPuxador + cotaInferior);
+            
+            // Atualizar campos de interface
+            if (puxadorCotaSuperior) {
+              puxadorCotaSuperior.value = cotaSuperior;
+            }
+            if (puxadorCotaInferior) {
+              puxadorCotaInferior.value = cotaInferior;
+            }
+            
+            // Atualizar configuração
+            atualizarConfiguracao({ 
+              puxador: { 
+                ...configAtual.puxador, 
+                medida: novoValor,
+                cotaSuperior: cotaSuperior,
+                cotaInferior: cotaInferior
+              } 
+            });
+          }
           // Para puxador horizontal ou outros tipos
           // Caso especial para medida 150mm
           if (novoValor === '150') {
@@ -1039,8 +1132,7 @@ function inicializarControlesPuxador() {
                 cotaInferior: cotaInferior
               } 
             });
-          }
-          else {
+          } else {
             // Para outras medidas, centralizar o puxador
             // Definir cota superior para posicionar o puxador verticalmente centralizado
             const cotaSuperior = Math.max(0, Math.round((alturaTotalPorta - alturaPuxador) / 2));
@@ -1082,9 +1174,8 @@ function inicializarControlesPuxador() {
             });
           }
         }
-      }
-      else {
-        // Caso esteja selecionando "Tamanho da Porta"
+      } else {
+        // Caso esteja selecionando "Tamanho da Porta" ou "Porta Inteira"
         // Forçar a seleção para '150'
         puxadorMedidaSelect.value = '150';
         
@@ -1199,8 +1290,7 @@ function inicializarControlesPuxador() {
     // Converter valores antigos para novos
     if (posicaoAtual === 'paralelo') {
       posicaoAtual = 'vertical';
-    }
-    else if (posicaoAtual === 'superior' || posicaoAtual === 'inferior') {
+    } else if (posicaoAtual === 'superior' || posicaoAtual === 'inferior') {
       posicaoAtual = 'horizontal';
     }
     
@@ -1252,8 +1342,7 @@ function inicializarControlesPuxador() {
               cotaInferior: cotaInferiorDefault 
             } 
           });
-        }
-        else {
+        } else {
           cotasVertical.style.display = 'none';
           cotasHorizontal.style.display = 'block';
           
@@ -1398,9 +1487,6 @@ function inicializarControlesDobradicasQtd() {
       dobradicasPosicao.innerHTML = '';
     }
   }
-  
-  // Exportar a função para uso global
-  window.atualizarCamposPosicoesDobradicasQtd = atualizarCamposPosicoesDobradicasQtd;
 }
 
 /**
@@ -1592,6 +1678,10 @@ function atualizarCamposPosicoesDobradicasQtd(qtd, posicoesPredefinidas = null) 
   // Atualizar desenho
   atualizarDesenho();
 }
+
+// Exportar função globalmente para acesso de outros módulos
+window.atualizarCamposPosicoesDobradicasQtd = atualizarCamposPosicoesDobradicasQtd;
+console.log('[DEBUG] Função atualizarCamposPosicoesDobradicasQtd exportada globalmente');
 
 /**
  * Configura validação para o formulário
@@ -2211,7 +2301,6 @@ export {
 
 // Também disponibilizar globalmente
 window.calcularPosicaoDefaultDobradica = calcularPosicaoDefaultDobradica;
-window.atualizarCamposPosicoesDobradicasQtd = atualizarCamposPosicoesDobradicasQtd; 
 window.definirNumeroDobradicasBasculante = definirNumeroDobradicasBasculante; 
 
 /**
@@ -2426,7 +2515,7 @@ export function inicializarControlesUI() {
     'posicaoVertical': handlePuxadorPosicaoCheckboxChange,
     'posicaoHorizontal': handlePuxadorPosicaoCheckboxChange,
     'btnImprimir': handleImprimir,
-    'btnSalvarRapido': handleSalvarRapido,
+    // 'btnSalvarRapido': handleSalvarRapido, // Movido para main.js - sistema híbrido
     // 'btnCarregar': handleCarregar, // Removido ou substituído por modal
     'btnSalvarObservacoes': handleSalvarObservacoes,
     'btnAbrirObservacoes': () => { // Adicionado listener para garantir que o campo seja focado ao abrir
@@ -2807,18 +2896,11 @@ function handleImprimir() {
 }
 
 /**
- * Handler para o botão de salvar rápido (localStorage).
- * Vibecode: Chama a função de salvar definida em storage.js.
+ * Handler para o botão de salvar rápido - REMOVIDO
+ * Agora é gerenciado pelo main.js com sistema híbrido (localStorage + Supabase)
  */
 function handleSalvarRapido() {
-  if (typeof window.salvarConfiguracaoRapida === 'function') {
-    console.log('[INFO Vibecode] Iniciando salvamento rápido...');
-    window.salvarConfiguracaoRapida(); // Assume que esta função existe globalmente ou no módulo storage.js
-     mostrarNotificacao('Projeto salvo localmente com sucesso!', 'success');
-  } else {
-    console.error('[ERRO Vibecode] Função de salvar rápido (window.salvarConfiguracaoRapida) não encontrada.');
-    mostrarNotificacao('Erro: Função de salvar não está disponível.', 'error');
-  }
+  console.log('[INFO] Handler de salvamento movido para main.js - sistema híbrido ativo');
 }
 
 /**

@@ -177,6 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.diagnosticarImpressao = diagnosticarImpressao;
     window.carregarUltimaConfiguracao = carregarUltimaConfiguracao;
     window.obterConfiguracaoAtual = obterConfiguracaoAtual;
+    window.mostrarNotificacao = mostrarNotificacao;
 
     // Carregar a última configuração (ou projeto salvo) SOMENTE APÓS inicializar todos os controles
     // Isso evita que funções de inicialização sobrescrevam os campos de medidas do projeto carregado
@@ -208,29 +209,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnMultiPDF.addEventListener('click', demonstrarMultiplasPaginasPDF);
     }
     
-    // Adicionar evento ao botão de salvar rápido
+    // Adicionar evento ao botão de salvar rápido - USANDO APENAS SUPABASE
     const btnSalvarRapido = document.getElementById('btnSalvarRapido');
     if (btnSalvarRapido) {
-      btnSalvarRapido.addEventListener('click', () => {
-        import('./storage.js').then(storage => {
-          storage.salvarConfiguracaoRapida();
-        }).catch(error => {
-          console.error('Erro ao importar módulo storage:', error);
-          mostrarNotificacao('Erro ao salvar projeto', 'error');
-        });
+      btnSalvarRapido.addEventListener('click', async () => {
+        try {
+          // Importar módulo Supabase
+          const storageSupabase = await import('./storage-supabase-only.js');
+          await storageSupabase.salvarConfiguracaoRapida();
+        } catch (error) {
+          console.error('Erro ao importar módulo storage Supabase:', error);
+          mostrarNotificacao('Erro ao salvar projeto no banco de dados', 'error');
+        }
       });
     }
     
-    // Adicionar evento ao botão de carregar projetos
+    // Adicionar evento ao botão de carregar projetos - USANDO APENAS SUPABASE
     const btnCarregarProjetos = document.getElementById('btnCarregarProjetos');
     if (btnCarregarProjetos) {
-      btnCarregarProjetos.addEventListener('click', () => {
-        import('./storage.js').then(storage => {
-          storage.carregarConfiguracoesNoModal();
-        }).catch(error => {
-          console.error('Erro ao importar módulo storage:', error);
-          mostrarNotificacao('Erro ao carregar projetos', 'error');
-        });
+      btnCarregarProjetos.addEventListener('click', async () => {
+        try {
+          // Importar módulo Supabase
+          const storageSupabase = await import('./storage-supabase-only.js');
+          await storageSupabase.carregarConfiguracoesNoModal();
+        } catch (error) {
+          console.error('Erro ao importar módulo storage Supabase:', error);
+          mostrarNotificacao('Erro ao carregar projetos do banco de dados', 'error');
+        }
       });
     }
     

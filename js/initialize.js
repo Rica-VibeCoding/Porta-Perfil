@@ -238,7 +238,7 @@ function obterConfiguracaoAtual() {
     largura: largura,
     altura: altura,
     quantidade: quantidadeInput ? parseInt(quantidadeInput.value, 10) || configuracaoAtual.quantidade : configuracaoAtual.quantidade,
-    vidro: vidroTipo ? vidroTipo.value : configuracaoAtual.vidro,
+    vidroTipo: vidroTipo ? vidroTipo.value : configuracaoAtual.vidroTipo || configuracaoAtual.vidro,
     perfilModelo: perfilModelo ? perfilModelo.value : configuracaoAtual.perfilModelo,
     perfilCor: perfilCor ? perfilCor.value : configuracaoAtual.perfilCor,
     funcao: funcao,
