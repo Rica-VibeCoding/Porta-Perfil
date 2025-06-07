@@ -359,15 +359,27 @@ export class CadastroModalCoordinator {
     }
 
     try {
+      // Verificar se tipo é válido
+      if (!tipo || !['puxador', 'trilho', 'vidro'].includes(tipo)) {
+        throw new Error(`Tipo inválido ou não especificado: ${tipo}`);
+      }
+
+      // Verificar se CadastroFormularios está disponível
+      if (!window.CadastroFormularios) {
+        throw new Error('CadastroFormularios não disponível');
+      }
+
       // Extrair dados do formulário
-      const dados = CadastroFormularios.extrairDados(tipo);
+      const dados = window.CadastroFormularios.extrairDados(tipo);
       
       console.log(`💾 Salvando ${tipo}:`, dados);
       
       // Validar dados
       const validacao = this.validarDados(tipo, dados);
       if (!validacao.valido) {
-        CadastroNotificacoes.erro(validacao.erros.join('\n'));
+        if (window.CadastroNotificacoes) {
+          window.CadastroNotificacoes.erro(validacao.erros.join('\n'));
+        }
         return false;
       }
       
@@ -377,6 +389,9 @@ export class CadastroModalCoordinator {
       
       switch (tipo) {
         case 'puxador':
+          if (!window.PuxadoresAPI) {
+            throw new Error('PuxadoresAPI não disponível');
+          }
           if (isEdicao) {
             resultado = await window.PuxadoresAPI.atualizar(dados.id, dados);
           } else {
@@ -385,6 +400,9 @@ export class CadastroModalCoordinator {
           break;
           
         case 'trilho':
+          if (!window.TrilhosAPI) {
+            throw new Error('TrilhosAPI não disponível');
+          }
           if (isEdicao) {
             resultado = await window.TrilhosAPI.atualizar(dados.id, dados);
           } else {
@@ -393,6 +411,9 @@ export class CadastroModalCoordinator {
           break;
           
         case 'vidro':
+          if (!window.VidrosAPI) {
+            throw new Error('VidrosAPI não disponível');
+          }
           if (isEdicao) {
             resultado = await window.VidrosAPI.atualizar(dados.id, dados);
           } else {
@@ -404,24 +425,30 @@ export class CadastroModalCoordinator {
           throw new Error(`Tipo não suportado: ${tipo}`);
       }
       
-      if (resultado.success) {
+      if (resultado && resultado.success) {
         const acao = isEdicao ? 'atualizado' : 'salvo';
-        CadastroNotificacoes.sucesso(`${tipo.charAt(0).toUpperCase() + tipo.slice(1)} ${acao} com sucesso!`);
+        if (window.CadastroNotificacoes) {
+          window.CadastroNotificacoes.sucesso(`${tipo.charAt(0).toUpperCase() + tipo.slice(1)} ${acao} com sucesso!`);
+        }
         
         // Fechar modal
-        this.modalManager.fecharModal();
+        if (this.modalManager) {
+          this.modalManager.fecharModal();
+        }
         
         // Atualizar tabela correspondente
         this.atualizarTabelaAposSalvar(tipo);
         
         return true;
       } else {
-        throw new Error(resultado.error || 'Erro desconhecido ao salvar');
+        throw new Error((resultado && resultado.error) || 'Erro desconhecido ao salvar');
       }
 
     } catch (error) {
       console.error(`Erro ao salvar ${tipo}:`, error);
-      CadastroNotificacoes.erro(`Erro ao salvar ${tipo}: ${error.message}`);
+      if (window.CadastroNotificacoes) {
+        window.CadastroNotificacoes.erro(`Erro ao salvar ${tipo}: ${error.message}`);
+      }
       return false;
     }
   }

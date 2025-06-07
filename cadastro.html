@@ -318,18 +318,46 @@
         });
     </script>
     
-    <!-- Scripts externos -->
-    <script src="js/lib/bootstrap.bundle.min.js"></script>
-    <script src="js/lib/html2canvas.min.js"></script>
-    <script src="js/lib/html2pdf.bundle.min.js"></script>
-    <script src="js/lib/svgpath.min.js"></script>
+    <!-- Scripts externos via CDN (para evitar erro 406) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     
     <!-- Scripts do aplicativo -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="js/app.js"></script>
     
+    <!-- Script de correções dos problemas identificados -->
+    <script src="js/refactoring-fixes.js"></script>
+    
+    <!-- Script de diagnóstico para arquivos faltantes -->
+    <script src="js/debug-missing-files.js"></script>
+    
+    <!-- Script de diagnóstico para tabela de usuários -->
+    <script src="js/debug-user-table.js"></script>
+    
     <!-- Script de diagnóstico para depuração de problemas com IDs de usuário -->
     <script type="module" src="js/debug-user.js"></script>
+    
+    <!-- Script de diagnóstico para modal de puxador -->
+    <script src="js/debug-modal-puxador.js"></script>
+    
+    <!-- Script de teste Supabase para puxadores -->
+    <script src="js/test-supabase-puxadores.js"></script>
+    
+    <!-- Script de correção emergencial -->
+    <script src="js/fix-erros-console.js"></script>
+    
+    <!-- Sistema de testes completo -->
+    <script src="js/test-completo-puxadores.js"></script>
+    
+    <!-- Correção dos erros reais -->
+    <script src="js/fix-erros-reais.js"></script>
+    
+    <!-- Debug de inserção Supabase -->
+    <script src="js/debug-insert-supabase.js"></script>
+    
+    <!-- Diagnóstico automático -->
+    <script src="js/diagnostico-insert-auto.js"></script>
 </body>
 </html> 

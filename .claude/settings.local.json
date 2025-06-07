@@ -14,7 +14,8 @@
       "Bash(find:*)",
       "Bash(rm:*)",
       "Bash(ls:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(env)"
     ],
     "deny": []
   }

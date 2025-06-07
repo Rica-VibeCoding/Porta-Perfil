@@ -196,7 +196,17 @@ export const VidrosUtils = {
   rgbParaCSS(rgb) {
     if (!rgb) return 'rgba(255,255,255,0.3)';
     
-    const valores = rgb.split(',');
+    // Limpar string e detectar formato
+    const rgbLimpo = rgb.trim();
+    
+    // Se já está em formato CSS, usar diretamente
+    if (rgbLimpo.startsWith('rgba(') || rgbLimpo.startsWith('rgb(')) {
+      return rgbLimpo;
+    }
+    
+    // Tratar formato r,g,b,a
+    const valores = rgbLimpo.split(',').map(v => v.trim());
+    
     if (valores.length === 3) {
       return `rgb(${valores.join(',')})`;
     } else if (valores.length === 4) {

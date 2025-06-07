@@ -199,7 +199,7 @@ class ModalCoordinator {
       event.stopPropagation();
     }
 
-    const handler = this.handlers[this.currentType].save;
+    const handler = this.handlers[this.currentType]?.save;
     if (!handler) {
       console.error(`Handler de save não encontrado para: ${this.currentType}`);
       return;
@@ -214,6 +214,10 @@ class ModalCoordinator {
       }
     } catch (error) {
       console.error(`Erro ao salvar ${this.currentType}:`, error);
+      // Adicionar notificação de erro para o usuário
+      if (window.CadastroNotificacoes) {
+        window.CadastroNotificacoes.erro(`Erro ao salvar ${this.currentType}: ${error.message}`);
+      }
     }
   }
 

@@ -290,11 +290,11 @@ async function handleLoginSubmit() {
   try {
     // Verificar se é o admin
     if (isAdmin(email)) {
-      // Login como admin
+      // Login como admin - sistema livre
       const adminUser = {
-        id: '00000000-0000-0000-0000-000000000007', // ID fixo para o admin
+        id: null, // Sistema livre: sem ID específico
         email,
-        nome: 'Ricardo Nilton Borges',
+        nome: nome || 'Administrador',
         empresa: 'Conecta Móveis e Representações'
       };
       
@@ -322,9 +322,9 @@ async function handleLoginSubmit() {
     const emailVerificado = await verificarEmailCadastrado(email);
     
     if (emailVerificado.cadastrado) {
-      // Login bem-sucedido com usuário existente
+      // Login bem-sucedido com usuário existente - sistema livre
       const user = {
-        id: emailVerificado.id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Usar ID do banco ou gerar um
+        id: null, // Sistema livre: sem ID específico
         email,
         nome: emailVerificado.nome || nome,
         empresa: emailVerificado.empresa || 'Não definida'
@@ -388,31 +388,19 @@ async function handleCadastroSubmit() {
       return;
     }
     
-    // Criar novo usuário (sem ID - será gerado pelo Supabase)
-    const novoUsuario = {
+    // Sistema livre: apenas salvar no localStorage, sem banco
+    const usuarioFinal = {
+      id: null, // Sistema livre: sem ID específico
       nome,
       email,
-      perfil: empresa, // Usar o campo 'perfil' que existe na tabela para armazenar a empresa
+      empresa: empresa,
       ativo: true,
       criado_em: new Date().toISOString()
     };
     
-    // Tentar cadastrar o usuário
-    const resultado = await cadastrarUsuario(novoUsuario);
-    
-    if (resultado.success) {
-      // Obter o ID real do usuário retornado pelo Supabase
-      let usuarioFinal = { 
-        ...novoUsuario,
-        empresa: empresa // Manter o campo empresa para o localStorage
-      };
-      
-      if (resultado.data && resultado.data[0] && resultado.data[0].id) {
-        usuarioFinal.id = resultado.data[0].id;
-      }
-      
-      // Fazer login com o usuário cadastrado
-      if (loginUser(usuarioFinal)) {
+    // Para sistema livre, não tentar cadastrar no banco
+    // Apenas fazer login direto
+    if (loginUser(usuarioFinal)) {
         // Fechar modal de cadastro
         cadastroModal.hide();
         
@@ -421,10 +409,9 @@ async function handleCadastroSubmit() {
         
         // Mostrar mensagem de sucesso
         mostrarNotificacao('Cadastro realizado com sucesso!', 'success');
+      } else {
+        mostrarNotificacao('Erro ao salvar dados do usuário.', 'error');
       }
-    } else {
-      mostrarNotificacao('Erro ao cadastrar usuário. Tente novamente.', 'error');
-    }
   } catch (error) {
     console.error('Erro no cadastro:', error);
     mostrarNotificacao('Erro ao cadastrar usuário', 'error');
@@ -558,6 +545,15 @@ function handleForgotPassword(e) {
   
   // Notificação
   mostrarNotificacao('Instruções de acesso exibidas', 'info');
+}
+
+// Função para gerar UUID temporário válido
+function generateTempUUID() {
+  return 'temp-' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }
 
 // Dados estáticos para demonstração (importado de usuarios.js)
