@@ -57,18 +57,22 @@ function ehPortaBasculante(funcao) {
 function ehPortaGiro(funcao) {
   if (!funcao) return false;
   
-  // Normalizar texto para comparação
+  // Normalizar texto para comparação (preservar case original para debug)
   const funcaoNormalizada = funcao.toLowerCase().replace(/[\s_]/g, '');
   
   console.log('[DEBUG ehPortaGiro] Testando função:', funcao, '→ Normalizada:', funcaoNormalizada);
   
-  // Lista de todas as variações de portas de giro
+  // Lista de todas as variações de portas de giro - incluindo valores exatos do formulário
   const varicoesGiro = [
     'giro',
-    'abrirsuperior', 'abrirsuperiordir', 'abrirsuperiordireta',
+    // Valores exatos do formulário HTML
+    'superiordireita', 'superioresquerda', 'inferiordireita', 'inferioresquerda',
+    // Variações com "Abrir"
+    'abrirsuperior', 'abrirsuperiordir', 'abrirsuperiordireta', 'abrirsuperiordireta',
     'abrirsuperiorsa', 'abrirsuperioresa', 'abrirsuperioresa',
     'abririnferior', 'abririnferiordir', 'abririnferiordireta', 
     'abririnferiorsa', 'abririnferioresa',
+    // Variações genéricas
     'superior', 'superiordir', 'superiordireta', 'superioresquerda',
     'inferior', 'inferiordir', 'inferiordireta', 'inferioresquerda',
     'direita', 'esquerda'
@@ -79,7 +83,8 @@ function ehPortaGiro(funcao) {
          funcaoNormalizada.includes('abrir') ||
          varicoesGiro.some(variacao => funcaoNormalizada.includes(variacao));
   
-  console.log('[DEBUG ehPortaGiro] Resultado:', resultado);
+  console.log('[DEBUG ehPortaGiro] Variações testadas:', varicoesGiro);
+  console.log('[DEBUG ehPortaGiro] Resultado final:', resultado);
   
   return resultado;
 }
@@ -92,6 +97,23 @@ function ehPortaGiro(funcao) {
  * @returns {object} - Objeto com cotas recalculadas
  */
 function recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, tipoPorta = 'giro') {
+  // Validação de entrada
+  if (!alturaPorta || alturaPorta <= 0) {
+    console.error('[ERRO] Altura da porta inválida:', alturaPorta);
+    return null;
+  }
+  
+  if (!medidaPuxador || medidaPuxador <= 0) {
+    console.error('[ERRO] Medida do puxador inválida:', medidaPuxador);
+    return null;
+  }
+  
+  // Verificar se o puxador cabe na porta
+  if (medidaPuxador >= alturaPorta) {
+    console.error('[ERRO] Puxador maior que a altura da porta:', { medidaPuxador, alturaPorta });
+    return null;
+  }
+  
   // Calcular posição central do puxador
   const espacoDisponivel = alturaPorta - medidaPuxador;
   const centroVertical = espacoDisponivel / 2;
@@ -100,19 +122,25 @@ function recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, tipoPorta = 
   const cotaSuperiorCentralizada = centroVertical;
   const cotaInferiorCentralizada = centroVertical;
   
-  console.log('[DEBUG] Recalculando cotas para centralizar:', {
-    alturaPorta,
-    medidaPuxador,
-    espacoDisponivel,
-    cotaSuperiorCentralizada,
-    cotaInferiorCentralizada
+  console.log('[RECENTRALIZAR] 🎯 Recalculando cotas para centralizar:', {
+    tipoPorta,
+    alturaPorta: alturaPorta + 'mm',
+    medidaPuxador: medidaPuxador + 'mm',
+    espacoDisponivel: espacoDisponivel + 'mm',
+    cotaSuperiorCentralizada: Math.round(cotaSuperiorCentralizada) + 'mm',
+    cotaInferiorCentralizada: Math.round(cotaInferiorCentralizada) + 'mm',
+    verificacao: `${Math.round(cotaSuperiorCentralizada)} + ${medidaPuxador} + ${Math.round(cotaInferiorCentralizada)} = ${Math.round(cotaSuperiorCentralizada) + medidaPuxador + Math.round(cotaInferiorCentralizada)}mm`
   });
   
-  return {
+  const resultado = {
     cotaSuperior: Math.max(0, Math.round(cotaSuperiorCentralizada)),
     cotaInferior: Math.max(0, Math.round(cotaInferiorCentralizada)),
     posicao: 'vertical'
   };
+  
+  console.log('[RECENTRALIZAR] ✅ Resultado final:', resultado);
+  
+  return resultado;
 }
 
 /**
@@ -123,17 +151,34 @@ function recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, tipoPorta = 
  * @returns {object} - Objeto com cotas padrão
  */
 function obterCotasPadraoParaGiro(alturaPorta = 2450, medidaPuxador = 150, funcao = '') {
-  // CORREÇÃO MATEMÁTICA: Para portas de giro, usar cálculo matematicamente correto
-  // com cota inferior padrão de 1000mm
+  // Validação de entrada
+  if (alturaPorta <= medidaPuxador) {
+    console.warn('[GIRO PADRÃO] ⚠️ Altura da porta menor ou igual à medida do puxador');
+    return recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, 'giro');
+  }
+  
+  // Para portas pequenas (menos de 1200mm), usar centralização automática
+  if (alturaPorta < 1200) {
+    console.log('[GIRO PADRÃO] 📐 Porta pequena detectada, usando centralização automática');
+    return recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, 'giro');
+  }
+  
+  // Para portas normais, usar cota inferior padrão de 1000mm
   const cotaInferiorPadrao = 1000;
   const cotaSuperiorCalculada = alturaPorta - medidaPuxador - cotaInferiorPadrao;
   
-  console.log('[CORREÇÃO MATEMÁTICA] Cálculo correto para porta de giro:', {
-    alturaPorta,
-    medidaPuxador,
-    cotaInferiorPadrao,
-    cotaSuperiorCalculada,
-    verificacao: cotaSuperiorCalculada + medidaPuxador + cotaInferiorPadrao
+  // Se não couber com a cota padrão, usar centralização
+  if (cotaSuperiorCalculada < 0) {
+    console.log('[GIRO PADRÃO] 📐 Cota padrão não cabe, usando centralização automática');
+    return recalcularCotasParaCentralizar(alturaPorta, medidaPuxador, 'giro');
+  }
+  
+  console.log('[GIRO PADRÃO] 📏 Cálculo padrão para porta de giro:', {
+    alturaPorta: alturaPorta + 'mm',
+    medidaPuxador: medidaPuxador + 'mm',
+    cotaInferiorPadrao: cotaInferiorPadrao + 'mm',
+    cotaSuperiorCalculada: cotaSuperiorCalculada + 'mm',
+    verificacao: `${cotaSuperiorCalculada} + ${medidaPuxador} + ${cotaInferiorPadrao} = ${cotaSuperiorCalculada + medidaPuxador + cotaInferiorPadrao}mm`
   });
   
   return {
@@ -546,4 +591,39 @@ export {
 window.validarCampoNumerico = validarCampoNumerico;
 window.mostrarErroValidacao = mostrarErroValidacao;
 window.removerErroValidacao = removerErroValidacao;
+
+// Função de teste global para validar combinações de altura/puxador
+window.testarCombinacoesAlturaPuxador = function() {
+  console.log('🧪 [TESTE COMBINAÇÕES] Testando diferentes combinações altura/puxador...');
+  
+  const combinacoes = [
+    { altura: 850, puxador: 150 },
+    { altura: 1000, puxador: 150 },
+    { altura: 1300, puxador: 150 },
+    { altura: 2450, puxador: 150 },
+    { altura: 850, puxador: 100 },
+    { altura: 850, puxador: 200 }
+  ];
+  
+  combinacoes.forEach((combo, index) => {
+    console.log(`\n${index + 1}. 📏 Testando: Altura ${combo.altura}mm + Puxador ${combo.puxador}mm`);
+    
+    // Testar padrão para giro
+    const cotasPadraoGiro = obterCotasPadraoParaGiro(combo.altura, combo.puxador);
+    console.log('   🔄 Padrão Giro:', cotasPadraoGiro);
+    
+    // Testar centralização
+    const cotasCentralizadas = recalcularCotasParaCentralizar(combo.altura, combo.puxador, 'giro');
+    console.log('   🎯 Centralizado:', cotasCentralizadas);
+    
+    // Validar resultado
+    if (cotasCentralizadas) {
+      const validacao = validarDimensoesPuxador(combo.altura, cotasCentralizadas.cotaSuperior, cotasCentralizadas.cotaInferior, combo.puxador);
+      console.log('   ✅ Validação:', validacao.isValid ? '✅ VÁLIDO' : '❌ INVÁLIDO - ' + validacao.mensagem);
+    }
+  });
+  
+  console.log('\n🎉 [TESTE COMBINAÇÕES] Teste concluído!');
+  return '✅ Teste de combinações executado - veja logs acima';
+};
 window.configurarValidacao = configurarValidacao; 

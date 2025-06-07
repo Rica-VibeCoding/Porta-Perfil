@@ -205,16 +205,44 @@ export function desenharPuxadorSVG(x, y, altura, ladoDireito = false, larguraPor
     });
     
     // Validar se as dimensões cabem na porta
-    const validacao = validarDimensoesPuxador(altura / CONFIG.escala, cotaSuperior, cotaInferior, medidaPuxador);
+    const alturaPortaMm = altura / CONFIG.escala;
+    const espacoOcupado = cotaSuperior + medidaPuxador + cotaInferior;
+    
+    console.log('[VALIDAÇÃO] 🔍 Verificando dimensões do puxador de giro:', {
+      alturaPortaMm: alturaPortaMm + 'mm',
+      cotaSuperior: cotaSuperior + 'mm',
+      medidaPuxador: medidaPuxador + 'mm', 
+      cotaInferior: cotaInferior + 'mm',
+      espacoOcupado: espacoOcupado + 'mm',
+      escala: CONFIG.escala,
+      alturaPixels: altura + 'px'
+    });
+    
+    const validacao = validarDimensoesPuxador(alturaPortaMm, cotaSuperior, cotaInferior, medidaPuxador);
     if (!validacao.isValid) {
-      console.warn('[VALIDAÇÃO] Problema com dimensões do puxador de giro:', validacao.mensagem);
-      console.warn('[VALIDAÇÃO] Valores que falharam:', { cotaSuperior, cotaInferior, medidaPuxador, altura: altura/CONFIG.escala });
-      console.warn('[VALIDAÇÃO] Sobrescrevendo com padrões:', cotasPadrao);
+      console.warn('[VALIDAÇÃO] ❌ Problema com dimensões do puxador de giro:', validacao.mensagem);
+      console.warn('[VALIDAÇÃO] 📊 Valores que falharam:', { 
+        cotaSuperior: cotaSuperior + 'mm', 
+        cotaInferior: cotaInferior + 'mm', 
+        medidaPuxador: medidaPuxador + 'mm', 
+        alturaPorta: alturaPortaMm + 'mm',
+        espacoOcupado: espacoOcupado + 'mm'
+      });
+      console.warn('[VALIDAÇÃO] 🔧 Sobrescrevendo com padrões:', {
+        cotaSuperior: cotasPadrao.cotaSuperior + 'mm',
+        cotaInferior: cotasPadrao.cotaInferior + 'mm'
+      });
       // Usar valores padrão seguros em caso de erro
       cotaSuperior = cotasPadrao.cotaSuperior;
       cotaInferior = cotasPadrao.cotaInferior;
     } else {
-      console.log('[VALIDAÇÃO] Dimensões do puxador de giro válidas:', { cotaSuperior, cotaInferior, medidaPuxador });
+      console.log('[VALIDAÇÃO] ✅ Dimensões do puxador de giro válidas:', { 
+        cotaSuperior: cotaSuperior + 'mm', 
+        cotaInferior: cotaInferior + 'mm', 
+        medidaPuxador: medidaPuxador + 'mm',
+        alturaPorta: alturaPortaMm + 'mm',
+        espacoTotal: espacoOcupado + 'mm'
+      });
     }
   }
   

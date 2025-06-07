@@ -431,60 +431,247 @@ function handleAlturaChange() {
  * Recentraliza automaticamente o puxador quando as dimensões da porta mudam
  */
 function recentralizarPuxadorAutomaticamente(novaAltura, alturaAntiga, config) {
+  console.log('[AUTO-CENTRALIZAR] 🚀 Iniciando recentralização automática do puxador');
+  console.log('[AUTO-CENTRALIZAR] Parâmetros:', { novaAltura, alturaAntiga, puxadorConfig: config.puxador, funcaoPorta: config.funcao });
+  
   // Verificar se há puxador configurado
-  if (!config.puxador || config.puxador.modelo === 'S/Puxador') {
+  if (!config.puxador) {
+    console.log('[AUTO-CENTRALIZAR] ❌ Nenhum puxador configurado');
+    return;
+  }
+  
+  if (config.puxador.modelo === 'S/Puxador') {
+    console.log('[AUTO-CENTRALIZAR] ❌ Puxador configurado como "S/Puxador"');
     return;
   }
   
   // Verificar se é "Porta Inteira" - nesses casos não precisamos recentralizar
   if (config.puxador.medida === 'Porta Inteira' || config.puxador.medida === 'Tamanho da Porta') {
+    console.log('[AUTO-CENTRALIZAR] ❌ Puxador configurado como "Porta Inteira" - não precisa recentralizar');
     return;
   }
   
   const medidaPuxador = parseInt(config.puxador.medida, 10);
-  if (isNaN(medidaPuxador)) return;
+  if (isNaN(medidaPuxador)) {
+    console.log('[AUTO-CENTRALIZAR] ❌ Medida do puxador inválida:', config.puxador.medida);
+    return;
+  }
   
   // Detectar tipo de porta
   const ehDeslizante = ehPortaDeslizante(config.funcao);
   const ehGiro = ehPortaGiro(config.funcao);
   
-  if (ehDeslizante || ehGiro) {
-    // Recalcular cotas para centralizar o puxador
-    const cotasRecentralizadas = recalcularCotasParaCentralizar(novaAltura, medidaPuxador, ehDeslizante ? 'deslizante' : 'giro');
-    
-    console.log('[AUTO-CENTRALIZAR] Recentralizando puxador:', {
-      tipoPorta: ehDeslizante ? 'deslizante' : 'giro',
-      novaAltura,
-      alturaAntiga,
-      medidaPuxador,
-      cotasRecentralizadas
-    });
-    
-    // Atualizar configuração com as novas cotas centralizadas
-    atualizarConfiguracao({
-      puxador: {
-        ...config.puxador,
-        cotaSuperior: cotasRecentralizadas.cotaSuperior,
-        cotaInferior: cotasRecentralizadas.cotaInferior
-      }
-    });
-    
-    // Atualizar campos do formulário para refletir as novas cotas
-    const puxadorCotaSuperior = document.getElementById('puxadorCotaSuperior');
-    const puxadorCotaInferior = document.getElementById('puxadorCotaInferior');
-    
-    if (puxadorCotaSuperior) {
-      puxadorCotaSuperior.value = cotasRecentralizadas.cotaSuperior;
-    }
-    
-    if (puxadorCotaInferior) {
-      puxadorCotaInferior.value = cotasRecentralizadas.cotaInferior;
-    }
+  console.log('[AUTO-CENTRALIZAR] Detecção do tipo de porta:', {
+    funcao: config.funcao,
+    ehDeslizante,
+    ehGiro
+  });
+  
+  if (!ehDeslizante && !ehGiro) {
+    console.log('[AUTO-CENTRALIZAR] ❌ Tipo de porta não suportado para auto-centralização');
+    return;
   }
+  
+  // Recalcular cotas para centralizar o puxador
+  const tipoPorta = ehDeslizante ? 'deslizante' : 'giro';
+  const cotasRecentralizadas = recalcularCotasParaCentralizar(novaAltura, medidaPuxador, tipoPorta);
+  
+  if (!cotasRecentralizadas) {
+    console.error('[AUTO-CENTRALIZAR] ❌ Erro ao recalcular cotas');
+    return;
+  }
+  
+  console.log('[AUTO-CENTRALIZAR] ✅ Recentralizando puxador:', {
+    tipoPorta,
+    novaAltura: novaAltura + 'mm',
+    alturaAntiga: alturaAntiga + 'mm',
+    medidaPuxador: medidaPuxador + 'mm',
+    cotasRecentralizadas
+  });
+  
+  // Atualizar configuração com as novas cotas centralizadas
+  atualizarConfiguracao({
+    puxador: {
+      ...config.puxador,
+      cotaSuperior: cotasRecentralizadas.cotaSuperior,
+      cotaInferior: cotasRecentralizadas.cotaInferior
+    }
+  });
+  
+  // Atualizar campos do formulário para refletir as novas cotas
+  const puxadorCotaSuperior = document.getElementById('puxadorCotaSuperior');
+  const puxadorCotaInferior = document.getElementById('puxadorCotaInferior');
+  
+  if (puxadorCotaSuperior) {
+    puxadorCotaSuperior.value = cotasRecentralizadas.cotaSuperior;
+    console.log('[AUTO-CENTRALIZAR] ✅ Campo cotaSuperior atualizado:', cotasRecentralizadas.cotaSuperior);
+  } else {
+    console.warn('[AUTO-CENTRALIZAR] ⚠️ Campo puxadorCotaSuperior não encontrado');
+  }
+  
+  if (puxadorCotaInferior) {
+    puxadorCotaInferior.value = cotasRecentralizadas.cotaInferior;
+    console.log('[AUTO-CENTRALIZAR] ✅ Campo cotaInferior atualizado:', cotasRecentralizadas.cotaInferior);
+  } else {
+    console.warn('[AUTO-CENTRALIZAR] ⚠️ Campo puxadorCotaInferior não encontrado');
+  }
+  
+  // Mostrar notificação para o usuário
+  if (typeof mostrarNotificacao === 'function') {
+    mostrarNotificacao(
+      `🎯 Puxador recentralizado automaticamente para altura ${novaAltura}mm`, 
+      'success', 
+      3000
+    );
+  }
+  
+  console.log('[AUTO-CENTRALIZAR] 🎉 Recentralização concluída com sucesso!');
 }
 
 // Tornar a função disponível globalmente
 window.handleAlturaChange = handleAlturaChange;
+
+// Função de teste para debug da recentralização automática
+window.testarRecentralizacaoPuxador = function(novaAltura, medidaPuxador = 150) {
+  console.log('🧪 [TESTE] Testando recentralização manual do puxador');
+  
+  const config = obterConfiguracaoAtual();
+  console.log('🧪 [TESTE] Configuração atual:', config);
+  
+  // Simular configuração de puxador se não existir
+  if (!config.puxador) {
+    config.puxador = {
+      modelo: 'TESTE-001',
+      medida: String(medidaPuxador),
+      posicao: 'vertical'
+    };
+    console.log('🧪 [TESTE] Puxador simulado criado:', config.puxador);
+  }
+  
+  const alturaAntiga = config.altura || 2450;
+  
+  console.log('🧪 [TESTE] Chamando recentralizarPuxadorAutomaticamente...');
+  recentralizarPuxadorAutomaticamente(novaAltura, alturaAntiga, config);
+  
+  console.log('🧪 [TESTE] Teste concluído. Verifique os logs acima.');
+  return '✅ Teste executado - verifique o console';
+};
+
+// Função de teste para verificar detecção de tipo de porta
+window.testarDeteccaoTipoPorta = function(funcao) {
+  console.log('🔍 [TESTE] Testando detecção de tipo de porta para:', funcao);
+  
+  const ehDeslizante = ehPortaDeslizante(funcao);
+  const ehGiro = ehPortaGiro(funcao);
+  
+  console.log('🔍 [TESTE] Resultados:', {
+    funcao,
+    ehDeslizante,
+    ehGiro
+  });
+  
+  return { funcao, ehDeslizante, ehGiro };
+};
+
+// Função de diagnóstico completo do sistema de puxadores
+window.diagnosticarSistemaPuxadores = function() {
+  console.log('🔬 [DIAGNÓSTICO] Iniciando diagnóstico completo do sistema de puxadores');
+  
+  const config = obterConfiguracaoAtual();
+  console.log('📋 [DIAGNÓSTICO] Configuração atual:', config);
+  
+  // Testar detecção de tipo de porta
+  if (config.funcao) {
+    const deteccao = window.testarDeteccaoTipoPorta(config.funcao);
+    console.log('🔍 [DIAGNÓSTICO] Detecção de tipo:', deteccao);
+  }
+  
+  // Verificar campos do formulário
+  const alturaInput = document.getElementById('alturaInput');
+  const puxadorCotaSuperior = document.getElementById('puxadorCotaSuperior');
+  const puxadorCotaInferior = document.getElementById('puxadorCotaInferior');
+  const puxadorMedida = document.getElementById('puxadorMedida');
+  const funcaoPorta = document.getElementById('funcaoPorta');
+  
+  console.log('📝 [DIAGNÓSTICO] Campos do formulário:', {
+    altura: alturaInput ? alturaInput.value : 'não encontrado',
+    cotaSuperior: puxadorCotaSuperior ? puxadorCotaSuperior.value : 'não encontrado',
+    cotaInferior: puxadorCotaInferior ? puxadorCotaInferior.value : 'não encontrado',
+    medidaPuxador: puxadorMedida ? puxadorMedida.value : 'não encontrado',
+    funcaoPorta: funcaoPorta ? funcaoPorta.value : 'não encontrado'
+  });
+  
+  // Testar cálculo de recentralização
+  if (alturaInput && puxadorMedida && config.altura) {
+    const novaAltura = parseInt(alturaInput.value);
+    const medidaPuxador = parseInt(puxadorMedida.value || '150');
+    
+    if (!isNaN(novaAltura) && !isNaN(medidaPuxador)) {
+      console.log('🧮 [DIAGNÓSTICO] Testando cálculo de recentralização...');
+      const cotasRecentralizadas = recalcularCotasParaCentralizar(novaAltura, medidaPuxador, 'giro');
+      console.log('📐 [DIAGNÓSTICO] Cotas recentralizadas:', cotasRecentralizadas);
+      
+      // Validar as novas cotas
+      const validacao = validarDimensoesPuxador(novaAltura, cotasRecentralizadas.cotaSuperior, cotasRecentralizadas.cotaInferior, medidaPuxador);
+      console.log('✅ [DIAGNÓSTICO] Validação das cotas:', validacao);
+    }
+  }
+  
+  console.log('🎯 [DIAGNÓSTICO] Diagnóstico concluído');
+  return '✅ Diagnóstico executado - verifique o console';
+};
+
+// Função para forçar mudança de altura e testar auto-centralização
+window.testarMudancaAltura = function(novaAltura) {
+  console.log('🧪 [TESTE ALTURA] Testando mudança de altura para:', novaAltura);
+  
+  const alturaInput = document.getElementById('alturaInput');
+  if (!alturaInput) {
+    console.error('❌ Campo alturaInput não encontrado');
+    return;
+  }
+  
+  const alturaAntiga = alturaInput.value;
+  console.log('📏 [TESTE ALTURA] Altura atual:', alturaAntiga, '→ Nova altura:', novaAltura);
+  
+  // Mudar o valor e disparar evento
+  alturaInput.value = novaAltura;
+  alturaInput.dispatchEvent(new Event('change'));
+  
+  console.log('✅ [TESTE ALTURA] Evento de mudança disparado');
+  return `Altura alterada de ${alturaAntiga}mm para ${novaAltura}mm`;
+};
+
+// Função de teste completo para reproduzir o problema das screenshots
+window.testarCenarioScreenshots = function() {
+  console.log('📸 [TESTE SCREENSHOTS] Reproduzindo cenário das screenshots...');
+  
+  // Primeiro: configurar altura inicial de 1300mm
+  console.log('1️⃣ Configurando altura inicial: 1300mm');
+  window.testarMudancaAltura(1300);
+  
+  setTimeout(() => {
+    // Verificar estado atual
+    console.log('📊 Estado após 1300mm:');
+    window.diagnosticarSistemaPuxadores();
+    
+    setTimeout(() => {
+      // Segundo: mudar para 850mm como na screenshot
+      console.log('2️⃣ Mudando para altura final: 850mm');
+      window.testarMudancaAltura(850);
+      
+      setTimeout(() => {
+        // Verificar estado final
+        console.log('📊 Estado final após 850mm:');
+        window.diagnosticarSistemaPuxadores();
+        
+        console.log('🎬 [TESTE SCREENSHOTS] Teste concluído!');
+      }, 500);
+    }, 500);
+  }, 500);
+  
+  return '🎬 Teste de cenário iniciado - aguarde os logs...';
+};
 
 function handleAlturaInput() {
   const input = document.getElementById('alturaInput');
