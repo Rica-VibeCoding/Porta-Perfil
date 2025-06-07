@@ -146,7 +146,7 @@ export function desenharPuxadorSVG(x, y, altura, ladoDireito = false, larguraPor
     
     // Usar configuração centralizada para portas deslizantes
     const cotasPadrao = obterCotasPadraoParaDeslizante(altura / CONFIG.escala, medidaPuxador);
-    posicaoPuxador = cotasPadrao.posicao;
+    // Manter a posição escolhida pelo usuário, usar apenas as cotas padrão
     
     // Usar valores do config se válidos, senão usar padrão calculado
     const cotaSuperiorConfig = parseInt(config.puxador.cotaSuperior, 10);
@@ -185,7 +185,7 @@ export function desenharPuxadorSVG(x, y, altura, ladoDireito = false, larguraPor
     
     // Usar configuração centralizada para portas de giro
     const cotasPadrao = obterCotasPadraoParaGiro(altura / CONFIG.escala, medidaPuxador, config.funcao);
-    posicaoPuxador = cotasPadrao.posicao;
+    // Manter a posição escolhida pelo usuário, usar apenas as cotas padrão
     
     // Usar valores do config se válidos, senão usar padrão calculado
     const cotaSuperiorConfig = parseInt(config.puxador.cotaSuperior, 10);

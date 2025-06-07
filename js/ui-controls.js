@@ -837,14 +837,11 @@ function inicializarControlesPuxador() {
         puxador: { ...configAtual.puxador, modelo: puxadorModeloSelect.value } 
       });
       
-      // NOVO: Esconder campo de posição se modelo for '100 Puxador', 'S/Puxador' ou tipo de porta deslizante/correr
+      // NOVO: Esconder campo de posição se modelo for '100 Puxador' ou 'S/Puxador'
       const puxadorPosicaoDiv = document.getElementById('puxadorPosicaoDiv');
       if (puxadorPosicaoDiv) {
         const modelo = puxadorModeloSelect.value.trim().toLowerCase();
-        const funcaoPorta = document.getElementById('funcaoPorta');
-        let funcao = funcaoPorta ? (funcaoPorta.value || '').toLowerCase().replace(/\s|_/g, '') : '';
-        const ehDeslizante = funcao.includes('deslizante') || funcao.includes('correr');
-        if (modelo === '100 puxador' || modelo === 's/puxador' || modelo === 's/ puxador' || ehDeslizante) {
+        if (modelo === '100 puxador' || modelo === 's/puxador' || modelo === 's/ puxador') {
           puxadorPosicaoDiv.style.display = 'none';
         } else {
           puxadorPosicaoDiv.style.display = '';
@@ -860,10 +857,7 @@ function inicializarControlesPuxador() {
       const puxadorPosicaoDiv = document.getElementById('puxadorPosicaoDiv');
       if (puxadorPosicaoDiv) {
         const modelo = puxadorModeloSelect.value.trim().toLowerCase();
-        const funcaoPorta = document.getElementById('funcaoPorta');
-        let funcao = funcaoPorta ? (funcaoPorta.value || '').toLowerCase().replace(/\s|_/g, '') : '';
-        const ehDeslizante = funcao.includes('deslizante') || funcao.includes('correr');
-        if (modelo === '100 puxador' || modelo === 's/puxador' || modelo === 's/ puxador' || ehDeslizante) {
+        if (modelo === '100 puxador' || modelo === 's/puxador' || modelo === 's/ puxador') {
           puxadorPosicaoDiv.style.display = 'none';
         } else {
           puxadorPosicaoDiv.style.display = '';
@@ -1219,7 +1213,7 @@ function inicializarControlesPuxador() {
         const funcao = funcaoPorta.value;
         const ehDeslizante = ehPortaDeslizante(funcao);
         const ehBasculante = ehPortaBasculante(funcao);
-        if (modelo === '100 puxador' || modelo === 's/puxador' || modelo === 's/ puxador' || ehDeslizante || ehBasculante) {
+        if (modelo === '100 puxador' || modelo === 's/puxador' || modelo === 's/ puxador' || ehBasculante) {
           puxadorPosicaoDiv.style.display = 'none';
         } else {
           puxadorPosicaoDiv.style.display = '';

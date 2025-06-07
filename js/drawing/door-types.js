@@ -356,8 +356,8 @@ export function desenharPortaDeslizante(config) {
       ...config,
       puxador: {
         ...config.puxador,
-        // Para portas deslizantes, sempre forçar vertical; para outras, manter config original
-        posicao: ehDeslizante ? 'vertical' : config.puxador.posicao,
+        // Manter a posição escolhida pelo usuário
+        posicao: config.puxador.posicao,
         lado: 'direito'
       }
     };
@@ -367,8 +367,8 @@ export function desenharPortaDeslizante(config) {
       ...config,
       puxador: {
         ...config.puxador,
-        // Para portas deslizantes, sempre forçar vertical; para outras, manter config original
-        posicao: ehDeslizante ? 'vertical' : config.puxador.posicao,
+        // Manter a posição escolhida pelo usuário
+        posicao: config.puxador.posicao,
         lado: 'esquerdo'
       }
     };
@@ -385,8 +385,8 @@ export function desenharPortaDeslizante(config) {
       ...config,
       puxador: {
         ...config.puxador,
-        // Para portas deslizantes, sempre forçar vertical; para outras, manter config original
-        posicao: ehDeslizante ? 'vertical' : config.puxador.posicao,
+        // Manter a posição escolhida pelo usuário
+        posicao: config.puxador.posicao,
         lado: ladoPuxador
       }
     };
